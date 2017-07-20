@@ -22,13 +22,13 @@ export default class AspectSwitcher extends React.Component {
 				height: 18,
 				borderRadius: 3,
 				marginRight: 3
-			}
+			},
 			square: {
 				height: 18,
 				width: 18,
 				borderRadius: 3,
 				marginRight: 3
-			}
+			},
 			circle: {
 				height: 18,
 				width: 18,

@@ -3,4 +3,4 @@ import ReactDOM from 'react-dom'
 
 import App from './app'
 
-ReactDOM.render(<App/>, $('.container'))
+ReactDOM.render(<App/>, document.querySelector('.container'))

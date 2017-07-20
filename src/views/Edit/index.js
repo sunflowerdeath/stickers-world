@@ -9,18 +9,19 @@ import PanelRow from '@@/components/PanelRow'
 import ColorPicker from '@@/components/ColorPicker'
 import Slider from '@@/components/Slider'
 
-import arrowLeftIcon from '@@/icons/arrowLeft.svg'
-import arrowUpIcon from '@@/icons/arrowUp.svg'
-import checkmarkIcon from '@@/icons/checkmark.svg'
+import arrowLeftIcon from '!raw-loader!@@/icons/arrowLeft.svg'
+import arrowUpIcon from '!raw-loader!@@/icons/arrowUp.svg'
+import checkmarkIcon from '!raw-loader!@@/icons/checkmark.svg'
 
 import EditModel from './model'
 
 const MIN_BRUSH_SIZE = 3
 const MAX_BRUSH_SIZE = 30
 
-@@/observer
-export default EditView extends React.Component {
+@observer
+export default class EditView extends React.Component {
 	constructor() {
+		super()
 		this.model = new EditModel()
 	}
 
@@ -46,19 +47,22 @@ export default EditView extends React.Component {
 				Edit
 			</TopBar>
 		)
+	}
 
 
 	renderBottomPanel() {
 		let model = this.model
 		return (
-			{modelshowEffectsPanel ? null : this.renderPaintPanel()}
-			<PanelRow>
-				Effects
-				<Tappable onTap={() => model.showEffectsPanel = !model.showEffectsPanel}>
-					<Icon icon={arrowUpIcon} />
-				</Tappable>
-			</PanelRow>
-			{model.showEffectsPanel ? this.renderEffectsPanel() : null}
+			<div>
+				{model.showEffectsPanel ? null : this.renderPaintPanel()}
+				<PanelRow>
+					Effects
+					<Tappable onTap={() => model.showEffectsPanel = !model.showEffectsPanel}>
+						<Icon icon={arrowUpIcon} />
+					</Tappable>
+				</PanelRow>
+				{model.showEffectsPanel ? this.renderEffectsPanel() : null}
+			</div>
 		)
 	}
 

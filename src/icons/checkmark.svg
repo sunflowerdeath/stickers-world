@@ -1,0 +1,25 @@
+<svg width="22" height="20" viewBox="0 0 22 20" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<title>done</title>
+<desc>Created using Figma</desc>
+<g id="Canvas" transform="translate(-872 344)">
+<rect x="872" y="-344" width="22" height="20" fill="#E5E5E5"/>
+<clipPath id="clip-0" clip-rule="evenodd">
+<path d="M 592 -357L 912 -357L 912 211L 592 211L 592 -357Z" fill="#FFFFFF"/>
+</clipPath>
+<g id="Edit" clip-path="url(#clip-0)">
+<path d="M 592 -357L 912 -357L 912 211L 592 211L 592 -357Z"/>
+<g id="top bar">
+<g id="Rectangle 16">
+<use xlink:href="#path0_fill" transform="translate(592 -357)" fill="#000000" fill-opacity="0.6"/>
+</g>
+<g id="done">
+<use xlink:href="#path1_stroke" transform="translate(874 -342)" fill="#FFFFFF"/>
+</g>
+</g>
+</g>
+</g>
+<defs>
+<path id="path0_fill" d="M 0 0L 320 0L 320 50L 0 50L 0 0Z"/>
+<path id="path1_stroke" d="M 0.818029 6.28197L 0.242852 5.46394L -1.39321 6.61429L -0.818029 7.43232L 0.818029 6.28197ZM 6.42857 16L 5.61054 16.5752L 6.4171 17.7223L 7.23887 16.586L 6.42857 16ZM 18.8103 0.586019L 19.3963 -0.224279L 17.7757 -1.39632L 17.1897 -0.586019L 18.8103 0.586019ZM -0.818029 7.43232L 5.61054 16.5752L 7.2466 15.4248L 0.818029 6.28197L -0.818029 7.43232ZM 7.23887 16.586L 18.8103 0.586019L 17.1897 -0.586019L 5.61827 15.414L 7.23887 16.586Z"/>
+</defs>
+</svg>

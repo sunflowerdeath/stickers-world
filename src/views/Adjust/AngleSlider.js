@@ -9,14 +9,13 @@ export default class AngleSlider extends React.Component {
 			dots.push(<div style={i === 0 ? styles.bar : styles.dot} />)
 		}
 
-		let dots = <div style={styles.dot} />
 		return (
 			<div style={styles.root}>
 				<div style={styles.pointer}/>
 				<div style={styles.dots}>
 					{dots}
 				</div>
-				<div style={styles.value}
+				<div style={styles.value}>
 					{value}
 				</div>
 			</div>

@@ -1,10 +1,10 @@
 import {observable} from 'mobx'
 
 export default class EditModel {
-	@observable showEffectsPanel = false,
+	@observable showEffectsPanel = false
 	@observable brushSize = 10
 	@observable preview = {
-		on: false
+		on: false,
 		background: 'black'
 	}
 	@observable effects = {

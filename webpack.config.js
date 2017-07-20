@@ -1,8 +1,21 @@
 const webpack = require('webpack')
 const path = require('path')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+
+var DEBUG = process.env.NODE_ENV !== 'production'
+
+let plugins = []
+
+if (DEBUG) {
+	plugins.push(new webpack.HotModuleReplacementPlugin())
+	plugins.push(new HtmlWebpackPlugin({
+		template: 'src/index.html',
+		title: 'Stickers world'
+	}))
+}
 
 module.exports = {
-	entry: './app/index.js',
+	entry: './src/index.js',
 
 	output: {
 		path: path.resolve(__dirname, 'dist'),
@@ -21,20 +34,14 @@ module.exports = {
 				options: {
 					presets: [
 						['env', {
-							targets: {
-								browsers: ['last 2 versions', 'safari >= 7']
-							},
-							modules: false
-						}]
-					]
-				}
-			},
-
-			{
-				test: /\.html$/,
-				loader: 'html-loader',
-				options: {
-					/* ... */
+						  targets: {
+							browsers: ['last 2 versions', 'safari >= 7']
+						  }
+						}],
+						'stage-0',
+						'react'
+					],
+					plugins: ['transform-decorators-legacy']
 				}
 			}
 		],
@@ -45,19 +52,20 @@ module.exports = {
 		// // extensions that are used
 	// },
 	
-	alias: {
-		'@@': path.resolve(__dirname)
+	resolve: {
+		alias: {
+			'@@': path.resolve(__dirname, 'src')
+		}
 	},
 
 	devtool: 'source-map', // enum
 
 	devServer: {
+		disableHostCheck: true,
 		contentBase: path.join(__dirname, 'dist'),
 		compress: true, // enable gzip compression
 		hot: true // hot module replacement. Depends on HotModuleReplacementPlugin
 	},
 
-	plugins: [
-		new webpack.HotModuleReplacementPlugin()
-	]
+	plugins: plugins
 }

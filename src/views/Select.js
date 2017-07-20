@@ -1,16 +1,32 @@
 import React from 'react'
 
 import TopBar from '@@/components/TopBar'
+import OverlayLayout from '@@/components/OverlayLayout'
 
-export default SelectPhotoView extends React.Component {
+const TOP_BAR_HEIGHT = 50
+
+export default class SelectView extends React.Component {
 	render() {
 		let styles = {
+			root: {
+				height: '100%',
+				display: 'flex',
+				flexDirection: 'column',
+				backgroundColor: 'black'
+			},
 			photos: {
-				display: 'flex'
+				height: '100%',
+				boxSizing: 'border-box',
+				paddingTop: TOP_BAR_HEIGHT + 20,
+				display: 'flex',
+				flexWrap: 'wrap',
+				overflow: 'auto',
+				paddingBottom: 20,
+				WebkitOverflowScrolling: 'touch'
 			},
 			photo: {
-				width: 50,
-				height: 50,
+				width: 100,
+				height: 100,
 				marginLeft: 20,
 				marginBottom: 20,
 				backgroundColor: 'white',
@@ -19,15 +35,18 @@ export default SelectPhotoView extends React.Component {
 		}
 
 		let photos = []
-		for (let i = 0; i < 15; i++) {
+		for (let i = 0; i < 55; i++) {
 			photos.push(<div style={styles.photo} />)
 		}
 
+		let topBar = <TopBar>Select photo</TopBar>
+
 		return (
-			<TopBar>Select photo</TopBar>
-			<div style={styles.photos>
-				{photos}
-			</div>
+			<OverlayLayout style={styles.root} top={topBar}>
+				<div style={styles.photos}>
+					{photos}
+				</div>
+			</OverlayLayout>
 		)
 	}
 }

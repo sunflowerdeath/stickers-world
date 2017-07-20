@@ -5,15 +5,17 @@ import TopBar from '@@/components/TopBar'
 import Tappable from '@@/components/Tappable'
 import Icon from '@@/components/Icon'
 
-import arrowLeftIcon from '@@/icons/arrowLeft.svg'
-import arrowRightIcon from '@@/icons/arrowRight.svg'
-import rotateIcon from '@@/icons/rotate.svg'
+import arrowLeftIcon from '!raw-loader!@@/icons/arrowLeft.svg'
+import arrowRightIcon from '!raw-loader!@@/icons/arrowRight.svg'
+import rotateIcon from '!raw-loader!@@/icons/rotate.svg'
 
 import AspectSwitcher from './AspectSwitcher'
 import AngleSlider from './AngleSlider'
 
-export default AdjustView extends React.Component {
+export default class AdjustView extends React.Component {
 	constructor(props) {
+		super()
+
 		const {width, height} = this.props
 
 		this.state = {
@@ -41,7 +43,7 @@ export default AdjustView extends React.Component {
 			<TopBar
 				leftIcon={<Icon icon={arrowLeftIcon} />}
 				onTapLeftIcon={this.props.onGoBack}
-				rightIcon={<Icon icon={arrowRightIcon} />
+				rightIcon={<Icon icon={arrowRightIcon} />}
 				onTapRightIcon={this.props.onGoNext}
 			>
 				<div>Crop photo</div>
