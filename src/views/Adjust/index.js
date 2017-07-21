@@ -15,6 +15,7 @@ import AngleSlider from './AngleSlider'
 const SCREEN_WIDTH = document.documentElement.clientWidth
 const SCREEN_HEIGHT = document.documentElement.clientHeight
 const TOP_BAR_HEIGHT = 50
+const BOTTOM_PANEL_HEIGHT = 90
 
 export default class AdjustView extends React.Component {
 	constructor(props) {
@@ -22,26 +23,84 @@ export default class AdjustView extends React.Component {
 
 		const {width, height} = props
 
+		// let top = (SCREEN_HEIGHT - TOP_BAR_HEIGHT - height) / 2
+		// let left = (SCREEN_WIDTH - width) / 2
+			// pan: {
+				// top, left
+			// },
+			// angle: 0,
+			// scale: this.getScale(width, height, 0),
+			// rotation: 0,
+
 		this.state = {
 			aspect: 'Free',
-			position: {
-				top: (SCREEN_HEIGHT - TOP_BAR_HEIGHT - height) / 2,
-				left: (SCREEN_WIDTH - width) / 2
-			},
-			scale: 1,
-			rotation: 0,
-			angle: 0,
 			crop: {
-				top: 0,
-				left: 0,
-				width,
-				height
+				top: 50,
+				left: 50,
+				width: width - 100,
+				height: height - 100,
+				angle: 0
 			}
 		}
 	}
 
+	// For given crop, calculate image transform, such that crop frame is positioned 
+	// at the center of the screen with 20px margin to edges
+	getStyles(crop) {
+		let {width, height} = this.props
+
+		let horizScale = (SCREEN_WIDTH - 20 * 2) / crop.width
+		let vertScale = (SCREEN_HEIGHT - TOP_BAR_HEIGHT - BOTTOM_PANEL_HEIGHT - 20 * 2) /
+			crop.height
+		let scale = Math.min(horizScale, vertScale)
+
+		let frameWidth = crop.width * scale
+		let frameHeight = crop.height * scale
+		let top = (SCREEN_HEIGHT - TOP_BAR_HEIGHT - frameHeight) / 2
+		let left = (SCREEN_WIDTH - frameWidth) / 2
+
+		return {
+			frame: {
+				position: 'absolute',
+				width: frameWidth,
+				height: frameHeight,
+				transform: [
+					`translateY(${top}px)`,
+					`translateX(${left}px)`
+				].join(' '),
+				willChange: 'transform, width, height',
+				border: '1px solid rgba(0,0,0,0.5)',
+				background: 'rgba(0,0,0,0.4)',
+				boxSizing: 'border-box'
+			},
+			image: {
+				position: 'absolute',
+				width: width * scale,
+				height: height * scale,
+				transform: [
+					`translateY(${top - crop.top * scale}px)`,
+					`translateX(${left - crop.left * scale}px)`,
+					`rotate(${-crop.angle}deg)`
+				].join(' '),
+				willChange: 'transform, width, height',
+				background: 'white',
+			}
+		}
+	}
+
+	getScale(width, height, angle) {
+		let rad = Math.abs(angle) * Math.PI / 180
+		let rotatedWidth = width * Math.cos(rad) + height * Math.sin(rad)
+		let rotatedHeight = width * Math.sin(rad) + height * Math.cos(rad)
+		let horizScale = (SCREEN_WIDTH - 20 * 2) / rotatedWidth
+		let vertScale = (SCREEN_HEIGHT - TOP_BAR_HEIGHT - BOTTOM_PANEL_HEIGHT - 20 * 2) /
+			rotatedHeight
+		return Math.min(horizScale, vertScale)
+	}
+
 	render() {
-		const {angle, crop, position} = this.state
+		const {width, height} = this.props
+		const {crop} = this.state
 
 		let topBar = (
 			<TopBar
@@ -63,31 +122,61 @@ export default class AdjustView extends React.Component {
 
 		let angleSlider = (
 			<AngleSlider
-				value={angle}
-				onChange={(angle) => this.setState({angle})}
+				value={crop.angle}
+				onChange={this.onChangeAngle.bind(this)}
 			/>
 		)
 
-		let imageStyle = {
-			position: 'absolute',
-			left: position.left,
-			top: position.top,
-			width: crop.width,
-			height: crop.height,
-			background: 'white',
-			transform: `rotate(${this.state.angle}deg)`,
-			willChange: 'transform'
+		let container = {
+			width: '100%',
+			height: '100%',
+			overflow: 'hidden',
+			position: 'absolute'
 		}
 
+		let styles = this.getStyles(this.state.crop)
+
 		return (
-			<OverlayLayout top={topBar} bottom={angleSlider}>
-				<div style={imageStyle} />
+			<OverlayLayout top={topBar} bottom={angleSlider} >
+				<Tappable
+					onTapStart={this.onPanStart.bind(this)}
+					onTapMove={this.onPanMove.bind(this)}
+					style={container}
+				>
+					<div style={styles.image} />
+					<div style={styles.frame} />
+				</Tappable>
 			</OverlayLayout>
 		)
+	}
+
+	onPanStart() {
+		this.initialCrop = this.state.crop
+	}
+
+	onPanMove({dx, dy}) {
+		let {left, top} = this.initialCrop
+		this.setState({
+			crop: {
+				...this.state.crop,
+				left: left - dx / 2,
+				top: top - dy / 2
+			}
+		})
 	}
 
 	rotate() {
 		let rotation = this.state.rotation === 270 ? 0 : (this.state.rotation + 90)
 		this.setState({rotation})
+	}
+
+	onChangeAngle(angle) {
+		let {width, height} = this.props
+		this.setState({
+			crop: {
+				...this.state.crop,
+				angle
+			}
+		})
 	}
 }

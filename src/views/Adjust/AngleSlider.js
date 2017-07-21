@@ -6,7 +6,9 @@ export default class AngleSlider extends React.Component {
 	getStyles(props) {
 		return {
 			root: {
-				marginBottom: 15
+				paddingBottom: 15,
+				paddingTop: 15,
+				background: 'rgba(0,0,0,0.5)'
 			},
 			pointer: {
 				width: 10,
@@ -42,10 +44,12 @@ export default class AngleSlider extends React.Component {
 			value: {
 				color: 'white',
 				fontSize: 14,
-				textAlign: 'center'
+				textAlign: 'center',
+				lineHeight: '20px'
 			}
 		}
 	}
+
 	render() {
 		let {value} = this.props
 

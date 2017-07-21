@@ -28,7 +28,7 @@ export default class OverlayLayout extends React.Component {
 		if (this.props.bottom) bottom = <div style={styles.bottom}>{this.props.bottom}</div>
 
 		return (
-			<div style={styles.root}>
+			<div style={{...styles.root, ...this.props.style}}>
 				{top}
 				{bottom}
 				{this.props.children}
