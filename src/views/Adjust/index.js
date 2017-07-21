@@ -23,15 +23,6 @@ export default class AdjustView extends React.Component {
 
 		const {width, height} = props
 
-		// let top = (SCREEN_HEIGHT - TOP_BAR_HEIGHT - height) / 2
-		// let left = (SCREEN_WIDTH - width) / 2
-			// pan: {
-				// top, left
-			// },
-			// angle: 0,
-			// scale: this.getScale(width, height, 0),
-			// rotation: 0,
-
 		this.state = {
 			aspect: 'Free',
 			crop: {
@@ -86,16 +77,6 @@ export default class AdjustView extends React.Component {
 				background: 'white',
 			}
 		}
-	}
-
-	getScale(width, height, angle) {
-		let rad = Math.abs(angle) * Math.PI / 180
-		let rotatedWidth = width * Math.cos(rad) + height * Math.sin(rad)
-		let rotatedHeight = width * Math.sin(rad) + height * Math.cos(rad)
-		let horizScale = (SCREEN_WIDTH - 20 * 2) / rotatedWidth
-		let vertScale = (SCREEN_HEIGHT - TOP_BAR_HEIGHT - BOTTOM_PANEL_HEIGHT - 20 * 2) /
-			rotatedHeight
-		return Math.min(horizScale, vertScale)
 	}
 
 	render() {
@@ -154,7 +135,7 @@ export default class AdjustView extends React.Component {
 		this.initialCrop = this.state.crop
 	}
 
-	onPanMove({dx, dy}) {
+	onPanMove({dx, dy, event}) {
 		let {left, top} = this.initialCrop
 		this.setState({
 			crop: {
@@ -163,6 +144,7 @@ export default class AdjustView extends React.Component {
 				top: top - dy / 2
 			}
 		})
+		event.preventDefault()
 	}
 
 	rotate() {

@@ -16,6 +16,9 @@ export default class SelectView extends React.Component {
 				backgroundColor: 'black'
 			},
 			photos: {
+				height: '100%',
+				overflow: 'auto',
+				WebkitOverflowScrolling: 'touch',
 				paddingTop: TOP_BAR_HEIGHT,
 				display: 'flex',
 				flexWrap: 'wrap',
