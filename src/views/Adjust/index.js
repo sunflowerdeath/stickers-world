@@ -144,7 +144,7 @@ export default class AdjustView extends React.Component {
 		this.setState({
 			crop: {
 				...this.state.crop,
-				left: left - dx / 2,
+				left: left - dx / 2, // TODO divide by scale
 				top: top - dy / 2
 			}
 		})

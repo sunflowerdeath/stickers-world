@@ -5,7 +5,8 @@ import Tappable from '@@/components/Tappable'
 export default class AspectSwitcher extends React.Component {
 	getStyles(props) {
 		let root = {
-			display: 'flex'
+			display: 'flex',
+			alignItems: 'center'
 		}
 
 		let selected = {

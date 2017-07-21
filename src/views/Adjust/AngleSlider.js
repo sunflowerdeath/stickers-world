@@ -8,7 +8,9 @@ export default class AngleSlider extends React.Component {
 			root: {
 				paddingBottom: 15,
 				paddingTop: 15,
-				background: 'rgba(0,0,0,0.5)'
+				background: 'rgba(0,0,0,0.5)',
+				backdropFilter: 'blur(10px)',
+				WebkitBackdropFilter: 'blur(10px)'
 			},
 			pointer: {
 				width: 10,
