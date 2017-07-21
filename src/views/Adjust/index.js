@@ -12,6 +12,8 @@ import rotateIcon from '!raw-loader!@@/icons/rotate.svg'
 import AspectSwitcher from './AspectSwitcher'
 import AngleSlider from './AngleSlider'
 
+import patrick from '!file-loader!@@/patrick.jpg'
+
 const SCREEN_WIDTH = document.documentElement.clientWidth
 const SCREEN_HEIGHT = document.documentElement.clientHeight
 const TOP_BAR_HEIGHT = 50
@@ -24,7 +26,7 @@ export default class AdjustView extends React.Component {
 		const {width, height} = props
 
 		this.state = {
-			aspect: 'Free',
+			aspect: 'rect',
 			crop: {
 				top: 50,
 				left: 50,
@@ -62,7 +64,8 @@ export default class AdjustView extends React.Component {
 				willChange: 'transform, width, height',
 				border: '1px solid rgba(0,0,0,0.5)',
 				background: 'rgba(0,0,0,0.4)',
-				boxSizing: 'border-box'
+				boxSizing: 'border-box',
+				borderRadius: this.state.aspect === 'circle' ? '50%' : 0
 			},
 			image: {
 				position: 'absolute',
@@ -74,7 +77,8 @@ export default class AdjustView extends React.Component {
 					`rotate(${-crop.angle}deg)`
 				].join(' '),
 				willChange: 'transform, width, height',
-				background: 'white',
+				backgroundImage: `url(${patrick})`,
+				backgroundSize: '100% 100%'
 			}
 		}
 	}
@@ -144,7 +148,6 @@ export default class AdjustView extends React.Component {
 				top: top - dy / 2
 			}
 		})
-		event.preventDefault()
 	}
 
 	rotate() {

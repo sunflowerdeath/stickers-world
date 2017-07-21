@@ -1,5 +1,7 @@
 import React from 'react'
 
+import Tappable from '@@/components/Tappable'
+
 export default class AspectSwitcher extends React.Component {
 	getStyles(props) {
 		let root = {
@@ -12,8 +14,7 @@ export default class AspectSwitcher extends React.Component {
 
 		let unselected = {
 			boxSizing: 'border-box',
-			borderWidth: 2,
-			borderColor: 'white'
+			border: '2px solid white'
 		}
 
 		let aspects = {
@@ -56,27 +57,27 @@ export default class AspectSwitcher extends React.Component {
 		let styles = this.getStyles(this.props)
 
 		return (
-			<div style={styles.root} onClick={this.onClick.bind(this)}>
+			<Tappable style={styles.root} onTap={this.onTap.bind(this)}>
 				<div style={styles.rect} />
 				<div style={styles.bar} />
 				<div style={styles.square} />
 				<div style={styles.bar} />
 				<div style={styles.circle} />
-			</div>
+			</Tappable>
 		)
 	}
 
-	onClick() {
+	onTap() {
 		let {value} = this.props
 		let aspect
-		if (value === 'free') {
+		if (value === 'rect') {
 			aspect = 'square'
 		} else if (value === 'square') {
 			aspect = 'circle'
 		} else if (value === 'circle') {
-			aspect = 'free'
+			aspect = 'rect'
 		}
-		this.onChange(value)
+		this.props.onChange(aspect)
 	}
 }
 

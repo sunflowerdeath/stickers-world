@@ -4,6 +4,8 @@ import TopBar from '@@/components/TopBar'
 import OverlayLayout from '@@/components/OverlayLayout'
 import Tappable from '@@/components/Tappable'
 
+import patrick from '!file-loader!@@/patrick.jpg'
+
 const TOP_BAR_HEIGHT = 50
 
 export default class SelectView extends React.Component {
@@ -51,7 +53,8 @@ class Photo extends React.Component {
 				height: 100,
 				marginLeft: 20,
 				marginBottom: 20,
-				backgroundColor: 'white',
+				background: `url(${patrick})`,
+				backgroundSize: 'cover',
 				borderRadius: 5
 			}
 		}
