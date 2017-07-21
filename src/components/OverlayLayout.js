@@ -8,14 +8,14 @@ export default class OverlayLayout extends React.Component {
 				height: '100%'
 			},
 			top: {
-				position: 'absolute',
+				position: 'fixed',
 				top: 0,
 				left: 0,
 				width: '100%',
 				zIndex: 1
 			},
 			bottom: {
-				position: 'absolute',
+				position: 'fixed',
 				bottom: 0,
 				left: 0,
 				width: '100%',

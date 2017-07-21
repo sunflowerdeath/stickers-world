@@ -12,11 +12,15 @@ import rotateIcon from '!raw-loader!@@/icons/rotate.svg'
 import AspectSwitcher from './AspectSwitcher'
 import AngleSlider from './AngleSlider'
 
+const SCREEN_WIDTH = document.documentElement.clientWidth
+const SCREEN_HEIGHT = document.documentElement.clientHeight
+const TOP_BAR_HEIGHT = 50
+
 export default class AdjustView extends React.Component {
 	constructor(props) {
 		super()
 
-		const {width, height} = this.props
+		const {width, height} = props
 
 		this.state = {
 			aspect: 'Free',
@@ -70,7 +74,9 @@ export default class AdjustView extends React.Component {
 			top: position.top,
 			width: crop.width,
 			height: crop.height,
-			background: 'white'
+			background: 'white',
+			transform: `rotate(${this.state.angle}deg)`,
+			willChange: 'transform'
 		}
 
 		return (

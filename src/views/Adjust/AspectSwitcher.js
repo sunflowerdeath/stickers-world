@@ -56,7 +56,7 @@ export default class AspectSwitcher extends React.Component {
 		let styles = this.getStyles(this.props)
 
 		return (
-			<div style={styles.root} onClick={this.props.onClick.bind(this)}>
+			<div style={styles.root} onClick={this.onClick.bind(this)}>
 				<div style={styles.rect} />
 				<div style={styles.bar} />
 				<div style={styles.square} />

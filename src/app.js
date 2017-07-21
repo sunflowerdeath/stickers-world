@@ -14,7 +14,14 @@ export default class App extends React.Component {
 
 	render() {
 		if (this.state.screen === 'select') {
-			return <SelectView/>
+			return <SelectView onSelect={this.onSelectPhoto.bind(this)} />
+		} else if (this.state.screen === 'adjust') {
+			let {width, height} = this.state.image
+			return <AdjustView width={width} height={height} />
 		}
+	}
+
+	onSelectPhoto() {
+		this.setState({screen: 'adjust', image: {width: 200, height: 150}})
 	}
 }
