@@ -1,5 +1,5 @@
 module.exports = (sequelize, types) => {
-	const Sticker = sequelize.define('', {
+	const Sticker = sequelize.define('Sticker', {
 		emojis: types.STRING,
 		file: types.STRING
 	})

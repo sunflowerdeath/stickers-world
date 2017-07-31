@@ -6,7 +6,8 @@ module.exports = (sequelize, dir) => {
 	fs
 		.readdirSync(dir)
 		.forEach(function(file) {
-			models[model.name] = sequelize.import(path.join(dir, file))
+			const model = sequelize.import(path.join(dir, file))
+			models[model.name] = model
 		})
 	Object.keys(models).forEach(function(modelName) {
 		if ('associate' in models[modelName]) models[modelName].associate(models)
