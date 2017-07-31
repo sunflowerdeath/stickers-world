@@ -1,0 +1,23 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: node
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: node
+    spec:
+      containers:
+      - name: stickers-world
+        image: stickers-world-dev
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: source-code
+          mountPath: /stickers-world-backend-dev
+      volumes:
+      - name: source-code
+        hostPath:
+          path: /stickers-world-backend-dev

@@ -1,0 +1,4 @@
+FROM node:8.2.1
+EXPOSE 80
+WORKDIR /stickers-world-backend-dev
+CMD npm run start-dev

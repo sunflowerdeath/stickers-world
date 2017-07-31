@@ -1,0 +1,16 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: node
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: node
+    spec:
+      containers:
+      - name: stickers-world
+        image: gcr.io/stickers-world/node:v1
+        ports:
+        - containerPort: 80

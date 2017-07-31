@@ -1,0 +1,23 @@
+{
+  "name": "stickers-world-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "start-dev": "nodemon -L src/server.js"
+  },
+  "author": "sunflowerdeath",
+  "license": "Unlicense",
+  "dependencies": {
+    "knex": "^0.13.0",
+    "koa": "^2.3.0",
+    "koa-body": "^2.3.0",
+    "koa-router": "^7.2.1",
+    "koa-session": "^5.4.0",
+    "mysql": "^2.14.0"
+  },
+  "devDependencies": {
+    "nodemon": "^1.11.0"
+  }
+}

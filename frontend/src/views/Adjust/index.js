@@ -28,10 +28,10 @@ export default class AdjustView extends React.Component {
 		this.state = {
 			aspect: 'rect',
 			crop: {
-				top: 50,
-				left: 50,
-				width: width - 100,
-				height: height - 100,
+				top: 30,
+				left: 30,
+				width: width - 50,
+				height: height - 50,
 				angle: 0
 			}
 		}
@@ -59,7 +59,8 @@ export default class AdjustView extends React.Component {
 				height: frameHeight,
 				transform: [
 					`translateY(${top}px)`,
-					`translateX(${left}px)`
+					`translateX(${left}px)`,
+					`rotate(${crop.angle}deg)`
 				].join(' '),
 				willChange: 'transform, width, height',
 				border: '1px solid rgba(0,0,0,0.5)',
@@ -74,7 +75,7 @@ export default class AdjustView extends React.Component {
 				transform: [
 					`translateY(${top - crop.top * scale}px)`,
 					`translateX(${left - crop.left * scale}px)`,
-					`rotate(${-crop.angle}deg)`
+					// `rotate(${-crop.angle}deg)`
 				].join(' '),
 				willChange: 'transform, width, height',
 				backgroundImage: `url(${patrick})`,
@@ -153,6 +154,7 @@ export default class AdjustView extends React.Component {
 	rotate() {
 		let rotation = this.state.rotation === 270 ? 0 : (this.state.rotation + 90)
 		this.setState({rotation})
+
 	}
 
 	onChangeAngle(angle) {
@@ -163,5 +165,13 @@ export default class AdjustView extends React.Component {
 				angle
 			}
 		})
+
+		let {crop} = this.state
+		// let r = Math.sqrt(crop.height**2 + crop.width**2)
+		let a = crop.top + crop.height / 2
+		let b = crop.left + crop.width / 2
+
+
+
 	}
 }
