@@ -22,7 +22,9 @@ kubectl config use-context minikube
 # Set minikube as docker host
 eval $(minikube docker-env)
 # Mount app directory to the minikube virtual machine
-minikube mount ./stickers-world-backend /stickers-world-backend-dev &
+minikube mount .:/stickers-world-backend-dev &
+# Stop mount job
+kill $(jobs -p)
 ```
 
 2. Build docker image and create kubernetes config (you need to do it only once)
@@ -68,7 +70,7 @@ gcloud config set container/cluster galaxy
 gcloud container clusters get-credentials galaxy --zone us-central1-a
 
 # Working with registry
-docker tag [IMAGE_ID] gcr.io/stickers-world/[IMAGE]
+docker tag [IMAGE_ID] gcr.io/stickers-world/node:v1
 gcloud docker -- push gcr.io/stickers-world/node:v1
 gcloud container images list --repository=gcr.io/stickers-world
 ```

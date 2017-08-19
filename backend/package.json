@@ -4,20 +4,30 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node src/server.js",
     "start-dev": "nodemon -L src/server.js"
   },
   "author": "sunflowerdeath",
   "license": "Unlicense",
   "dependencies": {
+    "bookshelf": "^0.10.4",
+    "decamelize": "^1.2.0",
     "knex": "^0.13.0",
     "koa": "^2.3.0",
     "koa-body": "^2.3.0",
+    "koa-conditional-get": "^2.0.0",
+    "koa-etag": "^3.0.0",
+    "koa-mount": "^3.0.0",
     "koa-router": "^7.2.1",
+    "koa-send": "^4.1.0",
     "koa-session": "^5.4.0",
-    "mysql": "^2.14.0"
+    "koa-static": "^4.0.1",
+    "lodash": "^4.17.4",
+    "q": "^1.5.0",
+    "sequelize": "^4.4.2"
   },
   "devDependencies": {
-    "nodemon": "^1.11.0"
+    "nodemon": "^1.11.0",
+    "sqlite3": "3.1.8"
   }
 }

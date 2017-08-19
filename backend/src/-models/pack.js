@@ -3,10 +3,10 @@ module.exports = (sequelize, types) => {
 		name: types.STRING
 	})
 
-	Pack.associate((models) => {
+	Pack.associate = (models) => {
 		Pack.belongsTo(models.User)
 		Pack.hasMany(models.Sticker)
-	})
+	}
 
 	return Pack
 }

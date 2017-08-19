@@ -1,0 +1,99 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fetch/2.0.3/fetch.js"></script>
+<script>
+	function createUser(name, token) {
+		fetch('/api/users/create', {
+			method: 'POST',
+			headers: {
+			  'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({name, token})
+		})
+			.then(function(res) {
+				if (!res.ok) throw new Error(res.statusText)
+				else return res.json()
+			})
+			.then(function(json) {
+				console.log('USER CREATED', json)
+			})
+			.catch(function(err) {
+				console.log('USER CREATE ERROR', err)
+			})
+	}
+	function createPack(token, name) {
+		fetch('/api/packs/create', {
+			method: 'POST',
+			headers: {
+			  'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({token, name})
+		})
+			.then(function(res) {
+				if (!res.ok) throw new Error(res.statusText)
+				else return res.json()
+			})
+			.then(function(json) {
+				console.log('CREATE PACK', json)
+			})
+			.catch(function(err) {
+				console.log('CREATE PACK ERROR', err)
+			})
+	}
+	function getPacks(token) {
+		fetch('/api/packs', {
+			method: 'POST',
+			headers: {
+			  'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({token})
+		})
+			.then(function(res) {
+				if (!res.ok) throw new Error(res.statusText)
+				else return res.json()
+			})
+			.then(function(json) {
+				console.log('GET PACKS', json)
+			})
+			.catch(function(err) {
+				console.log('GET PACKS ERROR', err)
+			})
+	}
+	function createSticker(token, packId, emojis) {
+		fetch('/api/stickers/create', {
+			method: 'POST',
+			headers: {
+			  'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({token, packId, emojis})
+		})
+			.then(function(res) {
+				if (!res.ok) throw new Error(res.statusText)
+				else return res.json()
+			})
+			.then(function(json) {
+				console.log('CREATE STICKER', json)
+			})
+			.catch(function(err) {
+				console.log('CREATE STICKER ERROR', err)
+			})
+	}
+	function getPack(token, id) {
+		fetch(`/api/packs/${id}`, {
+			method: 'POST',
+			headers: {
+			  'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({token, id})
+		})
+			.then(function(res) {
+				if (!res.ok) throw new Error(res.statusText)
+				else return res.json()
+			})
+			.then(function(json) {
+				console.log(`GET PACK ${id}`, json)
+			})
+			.catch(function(err) {
+				console.log('GET PACKS ERROR', err)
+			})
+	}
+</script>
+Test

@@ -4,9 +4,9 @@ module.exports = (sequelize, types) => {
 		file: types.STRING
 	})
 
-	Sticker.associate((models) => {
+	Sticker.associate = (models) => {
 		Sticker.belongsTo(models.Pack)
-	})
+	}
 
 	return Sticker
 }

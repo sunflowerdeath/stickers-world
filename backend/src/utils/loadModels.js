@@ -12,6 +12,7 @@ module.exports = (sequelize, dir) => {
 	Object.keys(models).forEach(function(modelName) {
 		if ('associate' in models[modelName]) models[modelName].associate(models)
 	})
+	return models
 }
 
 
