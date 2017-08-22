@@ -8,7 +8,21 @@ import patrick from '!file-loader!@@/patrick.jpg'
 
 const TOP_BAR_HEIGHT = 50
 
+function getPhotoSize({screenWidth, minPhotoSize, margin}) {
+	let count = Math.floor((screenWidth - margin) / (minPhotoSize + margin))
+	console.log(count)
+	return (screenWidth - margin * (count + 1)) / count
+}
+
 export default class SelectView extends React.Component {
+	constructor() {
+		super()
+		this.photoSize = getPhotoSize({
+			screenWidth: document.documentElement.clientWidth,
+			minPhotoSize: 70,
+			margin: 24
+		})
+	}
 	render() {
 		let styles = {
 			root: {
@@ -24,13 +38,15 @@ export default class SelectView extends React.Component {
 				paddingTop: TOP_BAR_HEIGHT,
 				display: 'flex',
 				flexWrap: 'wrap',
+				paddingLeft: 24,
 				paddingBottom: 20,
+				display: 'flex'
 			}
 		}
 
 		let photos = []
 		for (let i = 0; i < 55; i++) {
-			photos.push(<Photo onSelect={this.props.onSelect} />)
+			photos.push(<Photo onSelect={this.props.onSelect} size={this.photoSize} />)
 		}
 
 		let topBar = <TopBar>Select photo</TopBar>
@@ -49,10 +65,11 @@ class Photo extends React.Component {
 	render() {
 		let styles = {
 			root: {
-				width: 100,
-				height: 100,
-				marginLeft: 20,
-				marginBottom: 20,
+				boxSizing: 'border-box',
+				marginRight: 24,
+				marginBottom: 24,
+				width: this.props.size,
+				height: this.props.size,
 				background: `url(${patrick})`,
 				backgroundSize: 'cover',
 				borderRadius: 5
@@ -60,9 +77,7 @@ class Photo extends React.Component {
 		}
 
 		return (
-			<Tappable onTap={this.props.onSelect}>
-				<div style={styles.root} />
-			</Tappable>
+			<Tappable onTap={this.props.onSelect} style={styles.root} />
 		)
 	}
 }

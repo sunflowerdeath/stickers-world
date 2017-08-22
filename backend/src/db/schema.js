@@ -9,13 +9,13 @@ module.exports = {
 	packs: (table) => {
 		table.increments()
 		table.string('name')
-		table.string('user_id')
+		table.integer('user_id')
 	},
 
 	stickers: (table) => {
 		table.increments()
 		table.string('emojis')
 		table.string('file')
-		table.string('pack_id')
+		table.integer('pack_id')
 	}
 }

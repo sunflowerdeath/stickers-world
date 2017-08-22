@@ -1,24 +1,48 @@
 import React from 'react'
+import {Route, Switch, Link} from 'react-router-dom'
 
-let WIDTH = 300
-let HEIGHT = 400
+import matchMediaDecorator from '@@/utils/matchMedia/decorator'
 
+import LandscapeWarningView from '@@/views/LandscapeWarning'
+import LoginView from '@@/views/Login'
+import PacksListView from '@@/views/PacksList'
 import SelectView from '@@/views/Select'
 import AdjustView from '@@/views/Adjust'
 import EditView from '@@/views/Edit'
 
+let WIDTH = 300
+let HEIGHT = 400
+
+@matchMediaDecorator({
+	phoneLanscape: 
+		`(max-width: 768px)
+		and (max-height: 500px)
+		and (orientation: landscape)`
+})
 export default class App extends React.Component {
 	state = {
 		screen: 'select'
 	}
 
 	render() {
-		if (this.state.screen === 'select') {
-			return <SelectView onSelect={this.onSelectPhoto.bind(this)} />
-		} else if (this.state.screen === 'adjust') {
-			let {width, height} = this.state.image
-			return <AdjustView width={width} height={height} />
+		let phoneLandscape = this.props.matches.phoneLanscape
+
+		if (phoneLandscape) {
+			return <LandscapeWarningView />
+		} else {
+			return (
+				<Switch>
+					<Route path='/' exact={true} component={LoginView} />
+					<Route path='/packs' component={PacksListView} />
+				</Switch>
+			)
 		}
+		// if (this.state.screen === 'select') {
+			// return <SelectView onSelect={this.onSelectPhoto.bind(this)} />
+		// } else if (this.state.screen === 'adjust') {
+			// let {width, height} = this.state.image
+			// return <AdjustView width={width} height={height} />
+		// }
 	}
 
 	onSelectPhoto() {

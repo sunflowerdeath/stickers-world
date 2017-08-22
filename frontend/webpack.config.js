@@ -1,8 +1,8 @@
-const webpack = require('webpack')
-const path = require('path')
-const HtmlWebpackPlugin = require('html-webpack-plugin')
+let webpack = require('webpack')
+let path = require('path')
+let HtmlWebpackPlugin = require('html-webpack-plugin')
 
-var DEBUG = process.env.NODE_ENV !== 'production'
+const DEBUG = process.env.NODE_ENV !== 'production'
 
 let plugins = []
 
@@ -43,6 +43,14 @@ module.exports = {
 					],
 					plugins: ['transform-decorators-legacy']
 				}
+			},
+			{
+				test: /\.(png|jpg|webp)$/,
+				loader: 'file-loader'
+			},
+			{
+				test: /\.modernizrrc$/,
+				use: ['modernizr-loader', 'json-loader']
 			}
 		],
 	},
@@ -54,7 +62,8 @@ module.exports = {
 	
 	resolve: {
 		alias: {
-			'@@': path.resolve(__dirname, 'src')
+			'@@': path.resolve(__dirname, 'src'),
+			modernizr$: path.resolve(__dirname, '.modernizrrc')
 		}
 	},
 
