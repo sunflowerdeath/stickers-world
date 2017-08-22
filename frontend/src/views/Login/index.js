@@ -8,6 +8,8 @@ import Tappable from '@@/components/Tappable'
 import Logo from '@@/components/Logo'
 import SvgIcon from '@@/components/SvgIcon'
 
+import telegramPng from './telegram.png'
+
 import moneyfaceWebp from './moneyface.webp'
 import gnomekidWebp from './gnomekid.webp'
 import pepeWebp from './pepe.webp'
@@ -108,8 +110,8 @@ export default class LoginView extends React.Component {
 			telegramLogo: {
 				width: 50,
 				height: 50,
-				background: '#23B0E2',
-				borderRadius: '50%',
+				backgroundImage: `url(${telegramPng})`,
+				backgroundSize: 'cover',
 				margin: 'auto',
 				marginBottom: 16
 			},

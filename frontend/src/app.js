@@ -6,6 +6,7 @@ import matchMediaDecorator from '@@/utils/matchMedia/decorator'
 import LandscapeWarningView from '@@/views/LandscapeWarning'
 import LoginView from '@@/views/Login'
 import PacksListView from '@@/views/PacksList'
+import CreateStickerPackView from '@@/views/CreateStickerPack'
 import SelectView from '@@/views/Select'
 import AdjustView from '@@/views/Adjust'
 import EditView from '@@/views/Edit'
@@ -15,7 +16,8 @@ let HEIGHT = 400
 
 @matchMediaDecorator({
 	phoneLanscape: 
-		`(max-width: 768px)
+		`(min-width: 400px)
+		and (max-width: 768px)
 		and (max-height: 500px)
 		and (orientation: landscape)`
 })
@@ -33,7 +35,8 @@ export default class App extends React.Component {
 			return (
 				<Switch>
 					<Route path='/' exact={true} component={LoginView} />
-					<Route path='/packs' component={PacksListView} />
+					<Route path='/packs' exact={true} component={PacksListView} />
+					<Route path='/packs/create' exact={true} component={CreateStickerPackView} />
 				</Switch>
 			)
 		}

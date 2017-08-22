@@ -20,7 +20,7 @@ module.exports = {
 	output: {
 		path: path.resolve(__dirname, 'dist'),
 		filename: 'bundle.js',
-		// publicPath: /assets/, // string
+		publicPath: 'DEBUG' ? '/' : '/static/',
 	},
 
 	module: {
@@ -73,7 +73,8 @@ module.exports = {
 		disableHostCheck: true,
 		contentBase: path.join(__dirname, 'dist'),
 		compress: true, // enable gzip compression
-		hot: true // hot module replacement. Depends on HotModuleReplacementPlugin
+		hot: true, // hot module replacement. Depends on HotModuleReplacementPlugin
+		historyApiFallback: true
 	},
 
 	plugins: plugins

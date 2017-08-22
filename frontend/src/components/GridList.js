@@ -2,15 +2,11 @@ import React from 'react'
 
 import mixin from '@@/utils/mixin/decorator'
 import StylesMixin from '@@/utils/stylesMixin'
-import Tappable from '@@/components/Tappable'
-
-function getItemSize({screenWidth, minSize, vMargin}) {
-	let itemsInRow = Math.floor((screenWidth - vMargin) / (minSize + vMargin))
-	return (screenWidth - vMargin * (itemsInRow + 1)) / itemsInRow
-}
 
 @mixin(StylesMixin)
 export default class GridList extends React.Component {
+	static displayName = 'GridList'
+
 	static defaultProps = {
 		minSize: 100,
 		vMargin: 24,
@@ -28,29 +24,38 @@ export default class GridList extends React.Component {
 
 	constructor(props) {
 		super()
+		this.state = {
+			itemSize: this.getItemSize(props)
+		}
+		this.windowResizeListener = () => {
+			this.setState({itemSize: this.getItemSize(this.props)})
+		}
+		window.addEventListener('resize', this.windowResizeListener)
+	}
 
-		let {minSize, vMargin} = props
+	componentWillUnmount() {
+		window.removeEventListener('resize', this.windowResizeListener)
+	}
 
-		this.itemSize = getItemSize({
-			screenWidth: document.documentElement.clientWidth,
-			minSize,
-			vMargin
-		})
+	getItemSize({minSize, vMargin}) {
+		let screenWidth = document.documentElement.clientWidth
+		let itemsInRow = Math.floor((screenWidth - vMargin) / (minSize + vMargin))
+		return (screenWidth - vMargin * (itemsInRow + 1)) / itemsInRow
 	}
 
 	render() {
 		let {items, hMargin, vMargin} = this.props
 
-		let itemsElems = items.map(({id, children, label}) => {
+		let itemsElems = items.map(({key, children, label}) => {
 			return (
 				<GridListItem
-					id={id}
+					key={key}
 					children={children}
 					label={label}
-					size={this.itemSize}
+					size={this.state.itemSize}
 					hMargin={hMargin}
 					vMargin={vMargin}
-					onTap={() => this.props.onTap(item)}
+					onClick={() => this.props.onClickItem?.(key)}
 				/>
 			)
 		})
@@ -87,15 +92,17 @@ class GridListItem extends React.Component {
 	}
 
 	render() {
-		let {children, label, onTap} = this.props
+		let {children, label, onClick} = this.props
 		return (
-			<Tappable
+			<div
 				style={this.styles.root}
-				onTap={onTap}
+				onClick={onClick}
 			>
 				<div style={this.styles.content}>{children}</div>
 				<div style={this.styles.label}>{label}</div>
-			</Tappable>
+			</div>
 		)
 	}
+
+
 }

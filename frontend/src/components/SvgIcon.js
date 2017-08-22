@@ -6,12 +6,13 @@ document.head.append(s)
 
 export default class SvgIcon extends React.Component {
 	render() {
-		let {svg, style} = this.props
+		let {svg, fill, style, ...restProps} = this.props
 		return (
 			<div
 				className='svgIcon'
-				style={style}
+				style={{width: '100%', height: '100%', fill, ...style}}
 				dangerouslySetInnerHTML={{__html: svg}}
+				{...restProps}
 			/>
 		)
 	}

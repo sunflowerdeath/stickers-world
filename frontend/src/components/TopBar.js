@@ -22,39 +22,54 @@ export default class TopBar extends React.Component {
 
 		let title = {
 			fontSize: 20,
-			fontWeight: 500
+			fontWeight: 500,
+			flexGrow: 1
+		}
+
+		let icon = {
+			display: 'flex',
+			alignItems: 'center',
+			justifyContent: 'center',
+			width: 48,
+			height: 48
 		}
 
 		let leftIcon
 		if (props.leftIcon) {
 			leftIcon = {
-				display: 'flex',
-				alignItems: 'center',
-				justifyContent: 'center',
+				...icon,
 				marginRight: 8,
 				marginLeft: -16,
-				width: 48,
-				height: 48
 			}
 		}
 
-		return {root, title, leftIcon}
+		let rightIcon
+		if (props.rightIcon) {
+			rightIcon = {
+				...icon,
+				marginLeft: 8,
+				marginRight: -16
+			}
+		}
+
+		return {root, title, leftIcon, rightIcon}
 	}
 
 	render() {
 		let leftIcon
 		if (this.props.leftIcon) {
-			leftIcon = (
-				<Tappable style={this.styles.leftIcon}>
-					{this.props.leftIcon}
-				</Tappable>
-			)
+			leftIcon = <div style={this.styles.leftIcon}>{this.props.leftIcon}</div>
+		}
+		let rightIcon
+		if (this.props.rightIcon) {
+			rightIcon = <div style={this.styles.rightIcon}>{this.props.rightIcon}</div>
 		}
 
 		return (
 			<div style={this.styles.root}>
 				{leftIcon}
 				<div style={this.styles.title}>{this.props.children}</div>
+				{rightIcon}
 			</div>
 		)
 	}
