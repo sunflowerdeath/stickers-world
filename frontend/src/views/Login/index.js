@@ -1,8 +1,7 @@
 import React from 'react'
 import {withRouter} from 'react-router'
 
-import mixin from '@@/utils/mixin/decorator'
-import StylesMixin from '@@/utils/stylesMixin'
+import styledComponent from '@@/utils/styledComponent'
 import matchMediaDecorator from '@@/utils/matchMedia/decorator'
 import Tappable from '@@/components/Tappable'
 import Logo from '@@/components/Logo'
@@ -26,7 +25,7 @@ const SYMBOLS = {
 
 @withRouter
 @matchMediaDecorator({smallHeight: '(max-height: 700px)'})
-@mixin(StylesMixin)
+@styledComponent
 export default class LoginView extends React.Component {
 	static displayName = 'LoginView'
 

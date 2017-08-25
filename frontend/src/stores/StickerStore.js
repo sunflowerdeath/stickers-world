@@ -1,9 +1,11 @@
 import {observable} from 'mobx'
 
 export default class StickerStore {
-	@observable emojis = []
+	@observable id
+	@observable emojis
 
-	constructor({emojis}) {
+	constructor({id, emojis}) {
+		this.id = id
 		this.emojis = emojis
 	}
 }

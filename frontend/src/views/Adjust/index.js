@@ -5,8 +5,8 @@ import TopBar from '@@/components/TopBar'
 import Tappable from '@@/components/Tappable'
 import Icon from '@@/components/Icon'
 
-import arrowLeftIcon from '!raw-loader!@@/icons/arrowLeft.svg'
-import arrowRightIcon from '!raw-loader!@@/icons/arrowRight.svg'
+let arrowLeftIcon
+let arrowRightIcon
 import rotateIcon from '!raw-loader!@@/icons/rotate.svg'
 
 import AspectSwitcher from './AspectSwitcher'
@@ -170,8 +170,5 @@ export default class AdjustView extends React.Component {
 		// let r = Math.sqrt(crop.height**2 + crop.width**2)
 		let a = crop.top + crop.height / 2
 		let b = crop.left + crop.width / 2
-
-
-
 	}
 }

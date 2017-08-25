@@ -1,9 +1,8 @@
 import React from 'react'
 
-import mixin from '@@/utils/mixin/decorator'
-import StylesMixin from '@@/utils/stylesMixin'
+import styledComponent from '@@/utils/styledComponent'
 
-@mixin(StylesMixin)
+@styledComponent
 export default class GridList extends React.Component {
 	static displayName = 'GridList'
 
@@ -64,7 +63,7 @@ export default class GridList extends React.Component {
 	}
 }
 
-@mixin(StylesMixin)
+@styledComponent
 class GridListItem extends React.Component {
 	static styles = (props) => {
 		let {size, hMargin, vMargin} = props

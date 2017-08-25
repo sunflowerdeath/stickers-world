@@ -19,10 +19,7 @@ const STICKERS = {
 		{id: '1', name: 'gnomekid'},
 		{id: '2', name: 'moneyface'}
 	],
-	'2': [
-		{id: '3', name: 'cat1'},
-		{id: '4', name: 'cat2'}
-	]
+	'2': []
 }
 
 export default {
@@ -32,7 +29,7 @@ export default {
 	},
 
 	_fakeRequest(response, options) {
-		let {error, timeout} = {error: false, timeout: 500, ...options}
+		let {error, timeout} = {error: false, timeout: 800, ...options}
 		let deferred = Q.defer()
 		setTimeout(() => {
 			if (error) deferred.reject(response)

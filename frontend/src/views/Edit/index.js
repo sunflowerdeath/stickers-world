@@ -9,9 +9,10 @@ import PanelRow from '@@/components/PanelRow'
 import ColorPicker from '@@/components/ColorPicker'
 import Slider from '@@/components/Slider'
 
-import arrowLeftIcon from '!raw-loader!@@/icons/arrowLeft.svg'
-import arrowUpIcon from '!raw-loader!@@/icons/arrowUp.svg'
-import checkmarkIcon from '!raw-loader!@@/icons/checkmark.svg'
+// TODO
+let arrowLeftIcon
+let arrowUpIcon
+let checkmarkIcon
 
 import EditModel from './model'
 

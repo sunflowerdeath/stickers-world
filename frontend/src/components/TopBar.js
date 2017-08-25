@@ -1,10 +1,9 @@
 import React from 'react'
 
-import mixin from '@@/utils/mixin/decorator'
-import StylesMixin from '@@/utils/stylesMixin'
+import styledComponent from '@@/utils/styledComponent'
 import Tappable from '@@/components/Tappable'
 
-@mixin(StylesMixin)
+@styledComponent
 export default class TopBar extends React.Component {
 	static styles(props) {
 		let root = {

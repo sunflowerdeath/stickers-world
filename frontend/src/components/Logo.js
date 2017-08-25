@@ -1,9 +1,8 @@
 import React from 'react'
 
-import mixin from '@@/utils/mixin/decorator'
-import StylesMixin from '@@/utils/stylesMixin'
+import styledComponent from '@@/utils/styledComponent'
 
-@mixin(StylesMixin)
+@styledComponent
 export default class Logo extends React.Component {
 	static styles = () => {
 		let root = {

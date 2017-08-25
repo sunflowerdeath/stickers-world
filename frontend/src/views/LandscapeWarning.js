@@ -1,10 +1,9 @@
 import React from 'react'
 
-import mixin from '@@/utils/mixin/decorator'
-import StylesMixin from '@@/utils/stylesMixin'
+import styledComponent from '@@/utils/styledComponent'
 import Logo from '@@/components/Logo'
 
-@mixin(StylesMixin)
+@styledComponent
 export default class LandscapeWarningView extends React.Component {
 	static styles = {
 		logo: {
