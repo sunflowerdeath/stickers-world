@@ -10,7 +10,7 @@ import OverlayLayout from '@@/components/OverlayLayout'
 import TopBar from '@@/components/TopBar'
 
 @withRouter
-export default class CreateStickerPackView extends React.Component {
+export default class CreateStickerView extends React.Component {
 	render() {
 		return (
 			<div>
@@ -31,11 +31,13 @@ export default class CreateStickerPackView extends React.Component {
 
 	renderTopBar() {
 		let leftIcon = (
-			<IconButton onClick={() => this.props.history.push('/packs')}>
+			<IconButton
+				onClick={() => this.props.history.push(`/packs/${this.props.match.params.id}`)
+			}>
 				<ArrowBackIcon />
 			</IconButton>
 		)
 
-		return <TopBar leftIcon={leftIcon}>Create sticker pack</TopBar>
+		return <TopBar leftIcon={leftIcon}>Create sticker</TopBar>
 	}
 }

@@ -1,11 +1,15 @@
 import Modernizr from 'modernizr'
 import React from 'react'
 import ReactDOM from 'react-dom'
-import {BrowserRouter} from 'react-router-dom'
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider'
+import {Provider} from 'mobx-react'
 
+import api from './api/fakeApi'
+import StickersWorldStore from './stores/StickersWorldStore'
 import muiTheme from './muiTheme'
 import App from './app'
+
+let store = new StickersWorldStore(api)
 
 class ModernizrContextProvider extends React.Component {
 	static childContextTypes = {
@@ -17,13 +21,13 @@ class ModernizrContextProvider extends React.Component {
 
 Modernizr.on('webp', (webp) => {
 	let app = (
-		<MuiThemeProvider muiTheme={muiTheme}>
-			<BrowserRouter>
+		<Provider store={store}>
+			<MuiThemeProvider muiTheme={muiTheme}>
 				<ModernizrContextProvider features={{webp}}>
 					<App />
 				</ModernizrContextProvider>
-			</BrowserRouter>
-		</MuiThemeProvider>
+			</MuiThemeProvider>
+		</Provider>
 	)
 	ReactDOM.render(app, document.querySelector('.container'))
 })

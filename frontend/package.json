@@ -13,11 +13,13 @@
   "author": "sunflowerdeath",
   "license": "Unlicense",
   "dependencies": {
+    "babel-polyfill": "^6.26.0",
     "inline-style-prefixer": "^3.0.7",
     "material-ui": "^0.19.0",
     "mobx": "^3.2.1",
     "mobx-react": "^4.2.2",
     "modernizr": "^3.5.0",
+    "q": "^1.5.0",
     "react": "^15.6.1",
     "react-dom": "^15.6.1",
     "react-router": "^4.1.2",

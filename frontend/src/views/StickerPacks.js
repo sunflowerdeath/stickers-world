@@ -1,5 +1,8 @@
 import React from 'react'
 import {withRouter} from 'react-router'
+import {inject, observer} from 'mobx-react'
+
+import IconButton from 'material-ui/IconButton'
 import FloatingActionButton from 'material-ui/FloatingActionButton'
 import AddIcon from 'material-ui/svg-icons/content/add'
 import {grey600} from 'material-ui/styles/colors'
@@ -11,7 +14,9 @@ import SvgIcon from '@@/components/SvgIcon'
 import logoutSvg from '!raw-loader!@@/icons/logout.svg'
 
 @withRouter
-export default class PacksListView extends React.Component {
+@inject('store')
+@observer
+export default class StickerPacksView extends React.Component {
 	render() {
 		return (
 			<div>
@@ -43,12 +48,9 @@ export default class PacksListView extends React.Component {
 		}} />
 
 		let rightIcon = (
-			<SvgIcon
-				svg={logoutSvg}
-				fill='white'
-				style={{padding: 12, boxSizing: 'border-box'}}
-				onClick={() => this.props.history.push('/')}
-			/>
+			<IconButton onClick={() => this.props.history.push('/')}>
+				<SvgIcon svg={logoutSvg} fill='white' />
+			</IconButton>
 		)
 
 		return (
@@ -63,22 +65,21 @@ export default class PacksListView extends React.Component {
 	}
 
 	renderList() {
-		let items = [
-			{key: '1', name: 'Label'},
-			{key: '2', name: 'Label'},
-			{key: '3', name: 'Label'},
-			{key: '4', name: 'Label'}
-		]
-
-		let gridItems = items.map(({key, name}) => {
+		let {store} = this.props
+		let items = store.packs.values().map((pack) => {
 			return {
-				key,
-				label: 'name',
+				key: pack.id,
+				label: pack.name,
 				children: <div style={{
 					backgroundColor: 'white', flex: 1, borderRadius: '50%'}} />
 			}
 		})
 
-		return <GridList items={gridItems} />
+		return (
+			<GridList
+				items={items}
+				onClickItem={(id) => this.props.history.push(`/packs/${id}`)}
+			/>
+		)
 	}
 }
