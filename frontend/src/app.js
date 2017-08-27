@@ -14,6 +14,7 @@ import CreateStickerView from '@@/views/CreateSticker'
 import SelectView from '@@/views/Select'
 import AdjustView from '@@/views/Adjust'
 import EditView from '@@/views/Edit'
+import TestView from '@@/views/Test'
 
 let WIDTH = 300
 let HEIGHT = 400
@@ -33,6 +34,7 @@ export default class App extends React.Component {
 	}
 
 	render() {
+		return <TestView />
 		let phoneLandscape = this.props.matches.phoneLanscape
 
 		if (phoneLandscape) {

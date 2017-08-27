@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="24"
+   height="24"
+   viewBox="0 0 24 24"
+   version="1.1"
+   id="svg12"
+   sodipodi:docname="lightbulb.svg"
+   inkscape:version="0.92.1 r15371">
+  <metadata
+     id="metadata18">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs16" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1366"
+     inkscape:window-height="707"
+     id="namedview14"
+     showgrid="true"
+     inkscape:zoom="58.341834"
+     inkscape:cx="8.3350771"
+     inkscape:cy="5.4354019"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg12" />
+  <path
+     d="M10 21c0 .552.895 1 2 1s2-.448 2-1zM10 6.883L8.463 9.955l2.058 6.69.96-.29-1.942-6.31.463-.928 1 2 1-2 1 2 1-2 .464.928-1.942 6.31.96.29 2.057-6.69L14 6.883l-1 2-1-2-1 2z"
+     id="path2" />
+  <path
+     d="M9 16v5h6v-5zm1 1h4v3h-4z"
+     id="path4" />
+  <path
+     d="M9 18h6v1H9z"
+     id="path6" />
+  <path
+     d="M12 2C8.146 2 5 5.146 5 9c0 .34.033.672.08 1 1.2 2.25 2.62 4.697 3.92 7l1.475-1c-1.118-1.963-2.358-4.11-3.375-6-.065-.323-.1-.657-.1-1 0-2.773 2.227-5 5-5s5 2.227 5 5c0 .343-.035.677-.1 1-.996 1.902-2.257 4.038-3.375 6L15 17c1.27-2.32 2.75-4.734 3.92-7 .047-.328.08-.66.08-1 0-3.854-3.146-7-7-7z"
+     id="path8" />
+  <path
+     d="M9 15h6v1H9z"
+     id="path10" />
+</svg>

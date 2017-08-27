@@ -116,7 +116,6 @@ export default class StickerPackView extends React.Component {
 		return (
 			<GridList
 				style={{marginTop: 24}}
-				minSize={72}
 				items={items}
 			/>
 		)
