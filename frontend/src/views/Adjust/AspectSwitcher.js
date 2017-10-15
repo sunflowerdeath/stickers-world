@@ -3,22 +3,35 @@ import React from 'react'
 import Tappable from '@@/components/Tappable'
 
 export default class AspectSwitcher extends React.Component {
+	onTap() {
+		let {value} = this.props
+		let aspect
+		if (value === 'rect') {
+			aspect = 'square'
+		} else if (value === 'square') {
+			aspect = 'circle'
+		} else if (value === 'circle') {
+			aspect = 'rect'
+		}
+		this.props.onChange(aspect)
+	}
+
 	getStyles(props) {
-		let root = {
+		const root = {
 			display: 'flex',
 			alignItems: 'center'
 		}
 
-		let selected = {
+		const selected = {
 			background: 'white'
 		}
 
-		let unselected = {
+		const unselected = {
 			boxSizing: 'border-box',
 			border: '2px solid white'
 		}
 
-		let aspects = {
+		const aspects = {
 			rect: {
 				width: 24,
 				height: 18,
@@ -42,7 +55,7 @@ export default class AspectSwitcher extends React.Component {
 			Object.assign(aspects[i], props.value === i ? selected : unselected)
 		}
 
-		let bar = {
+		const bar = {
 			width: 2,
 			height: 25,
 			borderRadius: 2,
@@ -52,10 +65,9 @@ export default class AspectSwitcher extends React.Component {
 
 		return {root, ...aspects, bar}
 	}
-		
 
 	render() {
-		let styles = this.getStyles(this.props)
+		const styles = this.getStyles(this.props)
 
 		return (
 			<Tappable style={styles.root} onTap={this.onTap.bind(this)}>
@@ -67,19 +79,4 @@ export default class AspectSwitcher extends React.Component {
 			</Tappable>
 		)
 	}
-
-	onTap() {
-		let {value} = this.props
-		let aspect
-		if (value === 'rect') {
-			aspect = 'square'
-		} else if (value === 'square') {
-			aspect = 'circle'
-		} else if (value === 'circle') {
-			aspect = 'rect'
-		}
-		this.props.onChange(aspect)
-	}
 }
-
-

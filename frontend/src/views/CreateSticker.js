@@ -6,7 +6,6 @@ import TextField from 'material-ui/TextField'
 import FlatButton from 'material-ui/FlatButton'
 import ArrowBackIcon from 'material-ui/svg-icons/navigation/arrow-back'
 
-import OverlayLayout from '@@/components/OverlayLayout'
 import TopBar from '@@/components/TopBar'
 
 @withRouter
@@ -16,8 +15,8 @@ export default class CreateStickerView extends React.Component {
 			<div>
 				{this.renderTopBar()}
 				<div style={{padding: '0 24px'}}>
-					<TextField fullWidth={true} floatingLabelText='Name' />
-					<TextField fullWidth={true} floatingLabelText='Title' />
+					<TextField fullWidth={true} floatingLabelText="Name" />
+					<TextField fullWidth={true} floatingLabelText="Title" />
 					<FlatButton
 						labelStyle={{fontSize: 18}}
 						style={{display: 'block', margin: 'auto', fontSize: 18, marginTop: 24}}
@@ -30,10 +29,10 @@ export default class CreateStickerView extends React.Component {
 	}
 
 	renderTopBar() {
-		let leftIcon = (
+		const leftIcon = (
 			<IconButton
-				onClick={() => this.props.history.push(`/packs/${this.props.match.params.id}`)
-			}>
+				onClick={() => this.props.history.push(`/packs/${this.props.match.params.id}`)}
+			>
 				<ArrowBackIcon />
 			</IconButton>
 		)

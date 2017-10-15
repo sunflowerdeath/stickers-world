@@ -5,7 +5,6 @@ import styledComponent from '@@/utils/styledComponent'
 import matchMediaDecorator from '@@/utils/matchMedia/decorator'
 import Tappable from '@@/components/Tappable'
 import Logo from '@@/components/Logo'
-import SvgIcon from '@@/components/SvgIcon'
 
 import telegramPng from './telegram.png'
 
@@ -34,11 +33,11 @@ export default class LoginView extends React.Component {
 	}
 
 	static styles = (props, state, context) => {
-		let smallHeight = props.matches.smallHeight
-		let supportWebp = context.modernizr.webp
+		const smallHeight = props.matches.smallHeight
+		const supportWebp = context.modernizr.webp
 
-		let margin = smallHeight ? 32 : 64
-		let stickers = {
+		const margin = smallHeight ? 32 : 64
+		const stickers = {
 			moneyface: {
 				position: 'fixed',
 				top: 0,
@@ -89,13 +88,13 @@ export default class LoginView extends React.Component {
 				transform: 'translateX(-50%)'
 			},
 			logo: {
-				marginBottom: margin,
+				marginBottom: margin
 			},
 			block: {
 				width: 250,
 				textAlign: 'center',
 				margin: 'auto',
-				marginBottom: margin,
+				marginBottom: margin
 			},
 			button: {
 				textTransform: 'uppercase',
@@ -124,22 +123,6 @@ export default class LoginView extends React.Component {
 		this.clientHeight = document.documentElement.clientHeight
 	}
 
-	render() {
-		return (
-			<div style={this.styles.root}>
-				<div style={this.styles.moneyface} />
-				<div style={this.styles.gnomekid} />
-				<div style={this.styles.pepa} />
-				<div style={this.styles.pepe} />
-
-				<div style={this.styles.content}>
-					<Logo style={this.styles.logo} />
-					{this.renderBlocks()}
-				</div>
-			</div>
-		)
-	}
-
 	renderBlocks() {
 		return (
 			<div>
@@ -152,9 +135,10 @@ export default class LoginView extends React.Component {
 						<div style={this.styles.button}>Authorize in telegram bot</div>
 					</Tappable>
 					<div style={this.styles.caption}>
-						Send <span style={{color: 'white'}}>/start</span>{SYMBOLS.sp}
+						Send <span style={{color: 'white'}}>/start</span>
+						{SYMBOLS.sp}
 						to Stickers World bot and{SYMBOLS.nbsp}then click on link in reply.
-						<br/>
+						<br />
 						Bot will be able to upload your sticker{SYMBOLS.nbsp}packs to Telegram.
 					</div>
 				</div>
@@ -164,9 +148,25 @@ export default class LoginView extends React.Component {
 					</Tappable>
 					<div style={this.styles.caption}>
 						Create sticker without authorization
-						<br/>
+						<br />
 						and save png file to device.
 					</div>
+				</div>
+			</div>
+		)
+	}
+
+	render() {
+		return (
+			<div style={this.styles.root}>
+				<div style={this.styles.moneyface} />
+				<div style={this.styles.gnomekid} />
+				<div style={this.styles.pepa} />
+				<div style={this.styles.pepe} />
+
+				<div style={this.styles.content}>
+					<Logo style={this.styles.logo} />
+					{this.renderBlocks()}
 				</div>
 			</div>
 		)

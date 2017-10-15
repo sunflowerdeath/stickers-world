@@ -3,6 +3,18 @@ import React from 'react'
 import Tappable from '@@/components/Tappable'
 
 export default class AngleSlider extends React.Component {
+	onTapStart() {
+		this.initialValue = this.props.value
+	}
+
+	onTapMove({ dx }) {
+		const width = this.dotsRef.clientWidth
+		let value = this.initialValue + dx / width * 90
+		value = Math.min(Math.max(value, -45), 45)
+		if (value > -1 && value < 1) value = 0
+		this.props.onChange(value)
+	}
+
 	getStyles(props) {
 		return {
 			root: {
@@ -41,7 +53,7 @@ export default class AngleSlider extends React.Component {
 				width: 2,
 				height: 30,
 				borderRadius: 2,
-				background: 'white',
+				background: 'white'
 			},
 			value: {
 				color: 'white',
@@ -53,13 +65,12 @@ export default class AngleSlider extends React.Component {
 	}
 
 	render() {
-		let {value} = this.props
+		const { value } = this.props
+		const styles = this.getStyles(this.props)
 
-		let styles = this.getStyles(this.props)
-
-		let dots = []
-		for (let i = -45; i <= +45; i +=5) {
-			dots.push(<div style={i === 0 ? styles.bar : styles.dot} />)
+		const dots = []
+		for (let i = -45; i <= +45; i += 5) {
+			dots.push(<div key={i} style={i === 0 ? styles.bar : styles.dot} />)
 		}
 
 		return (
@@ -68,26 +79,17 @@ export default class AngleSlider extends React.Component {
 				onTapStart={this.onTapStart.bind(this)}
 				onTapMove={this.onTapMove.bind(this)}
 			>
-				<div style={styles.pointer}/>
-				<div style={styles.dots} ref={(ref) => this.dotsRef = ref}>
+				<div style={styles.pointer} />
+				<div
+					style={styles.dots}
+					ref={ref => {
+						this.dotsRef = ref
+					}}
+				>
 					{dots}
 				</div>
-				<div style={styles.value}>
-					{Math.round(value)}°
-				</div>
+				<div style={styles.value}>{Math.round(value)}°</div>
 			</Tappable>
 		)
-	}
-
-	onTapStart({x}) {
-		this.initialValue = this.props.value
-	}
-
-	onTapMove({dx}) {
-		const width = this.dotsRef.clientWidth
-		let value = this.initialValue + dx / width * 90
-		value = Math.min(Math.max(value, -45), 45)
-		if (value > -1 && value < 1) value = 0
-		this.props.onChange(value)
 	}
 }

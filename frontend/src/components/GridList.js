@@ -46,17 +46,15 @@ export default class GridList extends React.Component {
 		let {items, hMargin, vMargin} = this.props
 
 		let itemsElems = items.map(({key, children, label}) => {
-			return (
-				<GridListItem
-					key={key}
-					children={children}
-					label={label}
-					size={this.state.itemSize}
-					hMargin={hMargin}
-					vMargin={vMargin}
-					onClick={() => this.props.onClickItem?.(key)}
-				/>
-			)
+			return <GridListItem
+				key={key}
+				children={children}
+				label={label}
+				size={this.state.itemSize}
+				hMargin={hMargin}
+				vMargin={vMargin}
+				onClick={() => this.props.onClickItem && this.props.onClickItem(key)}
+			/>
 		})
 
 		return <div style={this.styles.root}>{itemsElems}</div>

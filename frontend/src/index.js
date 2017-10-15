@@ -9,18 +9,22 @@ import StickersWorldStore from './stores/StickersWorldStore'
 import muiTheme from './muiTheme'
 import App from './app'
 
-let store = new StickersWorldStore(api)
+const store = new StickersWorldStore(api)
 
 class ModernizrContextProvider extends React.Component {
 	static childContextTypes = {
 		modernizr: React.PropTypes.object
 	}
-	getChildContext() { return {modernizr: this.props.features} }
-	render() { return this.props.children }
+	getChildContext() {
+		return {modernizr: this.props.features}
+	}
+	render() {
+		return this.props.children
+	}
 }
 
-Modernizr.on('webp', (webp) => {
-	let app = (
+Modernizr.on('webp', webp => {
+	const app = (
 		<Provider store={store}>
 			<MuiThemeProvider muiTheme={muiTheme}>
 				<ModernizrContextProvider features={{webp}}>
@@ -31,4 +35,3 @@ Modernizr.on('webp', (webp) => {
 	)
 	ReactDOM.render(app, document.querySelector('.container'))
 })
-

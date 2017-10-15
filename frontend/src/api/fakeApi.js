@@ -8,29 +8,23 @@ const USER_INITIAL_DATA = {
 	user: {
 		name: 'sunflowerdeath'
 	},
-	packs: [
-		{id: '1', name: 'memes'},
-		{id: '2', name: 'cats'}
-	]
+	packs: [{id: '1', name: 'memes'}, {id: '2', name: 'cats'}]
 }
 
 const STICKERS = {
-	'1': [
-		{id: '1', name: 'gnomekid'},
-		{id: '2', name: 'moneyface'}
-	],
+	'1': [{id: '1', name: 'gnomekid'}, {id: '2', name: 'moneyface'}],
 	'2': []
 }
 
 export default {
 	getInitialData() {
 		return USER_INITIAL_DATA
-		// return USER_INITIAL_DATA
+		// return NO_USER_INITIAL_DATA
 	},
 
-	_fakeRequest(response, options) {
-		let {error, timeout} = {error: false, timeout: 800, ...options}
-		let deferred = Q.defer()
+	fakeRequest(response, options) {
+		const {error, timeout} = {error: false, timeout: 800, ...options}
+		const deferred = Q.defer()
 		setTimeout(() => {
 			if (error) deferred.reject(response)
 			else deferred.resolve(response)
@@ -38,19 +32,19 @@ export default {
 		return deferred.promise
 	},
 
-	createStickerPack({name, title}) {
-		return this._fakeRequest({id: new Date().getTime()})
+	createStickerPack(/* {name, title} */) {
+		return this.fakeRequest({id: new Date().getTime()})
 	},
 
 	getStickers({id}) {
-		return this._fakeRequest({stickers: STICKERS[id]})
+		return this.fakeRequest({stickers: STICKERS[id]})
 	},
 
-	editStickerPack({packId, edits}) {
-		return this._fakeRequest({ok: true})
+	editStickerPack(/* {packId, edits} */) {
+		return this.fakeRequest({ok: true})
 	},
 
-	createSticker({packId, name}) {
-		return this._fakeRequest({id: new Date().getTime()})
+	createSticker(/* {packId, name} */) {
+		return this.fakeRequest({id: new Date().getTime()})
 	}
 }
