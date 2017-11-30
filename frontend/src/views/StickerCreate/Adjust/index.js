@@ -7,18 +7,27 @@ import OverlayLayout from '@@/components/OverlayLayout'
 import TopBar from '@@/components/TopBar'
 import Tappable from '@@/components/Tappable'
 import Icon from '@@/components/Icon'
+import SvgIcon from '@@/components/SvgIcon'
 
-import AspectSwitcher from './AspectSwitcher'
+// import AspectSwitcher from './AspectSwitcher'
 import AngleSlider from './AngleSlider'
 
 let arrowLeftIcon
 let arrowRightIcon
 import rotateIcon from '!raw-loader!@@/icons/rotate.svg'
+import cornerIcon from '!raw-loader!./corner.svg'
 
 const SCREEN_WIDTH = document.documentElement.clientWidth
 const SCREEN_HEIGHT = document.documentElement.clientHeight
-const TOP_BAR_HEIGHT = 50
-const BOTTOM_PANEL_HEIGHT = 90
+const TOP_BAR_HEIGHT = 64
+const BOTTOM_PANEL_HEIGHT = 105
+
+const loadImage = url =>
+	new Promise(resolve => {
+		const image = new Image()
+		image.onload = resolve
+		image.src = url
+	})
 
 const getCropCorners = (crop, image) => ({
 	tl: {
@@ -121,14 +130,14 @@ export default class AdjustView extends React.Component {
 			width: PropTypes.number.isRequired,
 			height: PropTypes.number.isRequired,
 			src: PropTypes.string.isRequired
-		})
+		}).isRequired
 	}
 
 	static styles = (props, state) => {
 		const { crop, aspect, isPanning } = state
 		const { image } = props
 
-		const DISTANCE_TO_EDGE = 30
+		const DISTANCE_TO_EDGE = 10
 		const horizScale = (SCREEN_WIDTH - DISTANCE_TO_EDGE * 2) / crop.width
 		const vertScale =
 			(SCREEN_HEIGHT -
@@ -140,11 +149,51 @@ export default class AdjustView extends React.Component {
 
 		const cropWidth = crop.width * scale
 		const cropHeight = crop.height * scale
-		const top = (SCREEN_HEIGHT - TOP_BAR_HEIGHT - cropHeight) / 2
+		const top =
+			TOP_BAR_HEIGHT +
+			(SCREEN_HEIGHT - TOP_BAR_HEIGHT - BOTTOM_PANEL_HEIGHT - cropHeight) / 2
 		const left = (SCREEN_WIDTH - cropWidth) / 2
 
 		const originTop = (crop.top + crop.height / 2) * scale
 		const originLeft = (crop.left + crop.width / 2) * scale
+
+		const corner = {
+			position: 'absolute',
+			width: 16,
+			height: 16,
+			fill: 'white',
+			padding: 10
+		}
+
+		const corners = {
+			cornerTopLeft: {
+				...corner,
+				top: -14,
+				left: -14,
+				cursor: 'nwse-resize'
+			},
+			cornerTopRight: {
+				...corner,
+				top: -14,
+				right: -14,
+				transform: 'rotate(90deg)',
+				cursor: 'nesw-resize'
+			},
+			cornerBottomLeft: {
+				...corner,
+				bottom: -14,
+				left: -14,
+				transform: 'rotate(270deg)',
+				cursor: 'nesw-resize'
+			},
+			cornerBottomRight: {
+				...corner,
+				bottom: -14,
+				right: -14,
+				transform: 'rotate(180deg)',
+				cursor: 'nwse-resize'
+			}
+		}
 
 		return {
 			container: {
@@ -152,6 +201,19 @@ export default class AdjustView extends React.Component {
 				height: '100%',
 				overflow: 'hidden',
 				position: 'absolute'
+			},
+			image: {
+				position: 'absolute',
+				width: image.width * scale,
+				height: image.height * scale,
+				transform: [
+					`translateY(${top - crop.top * scale}px)`,
+					`translateX(${left - crop.left * scale}px)`,
+					`rotate(${-crop.angle}deg)`
+				].join(' '),
+				transformOrigin: `${originLeft}px ${originTop}px`,
+				willChange: 'transform, width, height, opacity',
+				opacity: isPanning ? '0.5' : '0.3'
 			},
 			crop: {
 				position: 'absolute',
@@ -169,19 +231,11 @@ export default class AdjustView extends React.Component {
 				boxSizing: 'border-box',
 				borderRadius: aspect === 'circle' ? '50%' : 0
 			},
-			image: {
-				position: 'absolute',
-				width: image.width * scale,
-				height: image.height * scale,
-				transform: [
-					`translateY(${top - crop.top * scale}px)`,
-					`translateX(${left - crop.left * scale}px)`,
-					`rotate(${-crop.angle}deg)`
-				].join(' '),
-				transformOrigin: `${originLeft}px ${originTop}px`,
-				willChange: 'transform, width, height, opacity',
-				opacity: isPanning ? '0.5' : '0.3'
-			}
+			canvas: {
+				width: '100%',
+				height: '100%'
+			},
+			...corners
 		}
 	}
 
@@ -202,10 +256,15 @@ export default class AdjustView extends React.Component {
 		}
 	}
 
-	componentDidMount() {}
+	componentDidMount() {
+		loadImage(this.props.image.src).then(() => {
+			this.imageIsLoaded = true
+			this.paintCrop()
+		})
+	}
 
 	componentDidUpdate() {
-		this.paintCrop()
+		if (this.imageIsLoaded) this.paintCrop()
 	}
 
 	onPanStart() {
@@ -229,11 +288,6 @@ export default class AdjustView extends React.Component {
 	onPanEnd() {
 		this.setState({ isPanning: false })
 	}
-
-	// changeOrientation() {
-	//     const orientation = this.state.rotation === 270 ? 0 : this.state.rotation + 90
-	//     this.setState({ orientation })
-	// }
 
 	onRotateStart() {
 		this.initialCrop = this.state.crop
@@ -268,6 +322,16 @@ export default class AdjustView extends React.Component {
 		this.setState({ crop: scaledCrop })
 	}
 
+	onResizeStart(direction) {
+	}
+
+	onResizeMove(dx, dy) {
+	}
+
+	onPinchMove(dx, dy, scale) {
+
+	}
+
 	paintCrop() {
 		if (!this.imageLoaded) return
 
@@ -293,13 +357,14 @@ export default class AdjustView extends React.Component {
 				onTapLeftIcon={this.props.onGoBack}
 				rightIcon={<Icon icon={arrowRightIcon} />}
 				onTapRightIcon={this.props.onGoNext}
+				style={{ background: 'none' }}
 			>
 				<div>Crop photo</div>
-				<AspectSwitcher
+				{/*<AspectSwitcher
 					value={this.state.aspect}
 					onChange={aspect => this.setState({ aspect })}
 				/>
-				{/*<Tappable onTap={this.changeOrientation.bind(this)}>
+				<Tappable onTap={this.changeOrientation.bind(this)}>
 					<Icon icon={rotateIcon} />
 				</Tappable>*/}
 			</TopBar>
@@ -331,14 +396,20 @@ export default class AdjustView extends React.Component {
 							this.imageLoaded = true
 						}}
 					/>
-					<canvas
-						width={crop.width}
-						height={crop.height}
-						style={this.styles.crop}
-						ref={ref => {
-							this.canvasRef = ref
-						}}
-					/>
+					<div style={this.styles.crop}>
+						<canvas
+							style={this.styles.canvas}
+							width={crop.width}
+							height={crop.height}
+							ref={ref => {
+								this.canvasRef = ref
+							}}
+						/>
+						<SvgIcon svg={cornerIcon} style={this.styles.cornerTopLeft} />
+						<SvgIcon svg={cornerIcon} style={this.styles.cornerTopRight} />
+						<SvgIcon svg={cornerIcon} style={this.styles.cornerBottomLeft} />
+						<SvgIcon svg={cornerIcon} style={this.styles.cornerBottomRight} />
+					</div>
 				</Tappable>
 			</OverlayLayout>
 		)
