@@ -1,7 +1,7 @@
 import React from 'react'
-import {withRouter} from 'react-router'
+import { withRouter } from 'react-router'
+import floral from 'floral'
 
-import styledComponent from '@@/utils/styledComponent'
 import matchMediaDecorator from '@@/utils/matchMedia/decorator'
 import Tappable from '@@/components/Tappable'
 import Logo from '@@/components/Logo'
@@ -23,8 +23,8 @@ const SYMBOLS = {
 }
 
 @withRouter
-@matchMediaDecorator({smallHeight: '(max-height: 700px)'})
-@styledComponent
+@matchMediaDecorator({ smallHeight: '(max-height: 700px)' })
+@floral
 export default class LoginView extends React.Component {
 	static displayName = 'LoginView'
 
@@ -79,6 +79,7 @@ export default class LoginView extends React.Component {
 				transform: 'scaleX(-1) rotate(-7deg) translateX(-20%) translateY(5%)'
 			}
 		}
+
 		return {
 			content: {
 				color: 'white',
@@ -117,33 +118,32 @@ export default class LoginView extends React.Component {
 		}
 	}
 
-	constructor() {
-		super()
-		this.clientWidth = document.documentElement.clientWidth
-		this.clientHeight = document.documentElement.clientHeight
-	}
-
 	renderBlocks() {
 		return (
 			<div>
 				<div style={this.styles.block}>
 					<Tappable
-						style={{cursor: 'pointer'}}
+						style={{ cursor: 'pointer' }}
 						onTap={() => this.props.history.push('/packs')}
 					>
 						<div style={this.styles.telegramLogo} />
 						<div style={this.styles.button}>Authorize in telegram bot</div>
 					</Tappable>
 					<div style={this.styles.caption}>
-						Send <span style={{color: 'white'}}>/start</span>
+						Send <span style={{ color: 'white' }}>/start</span>
 						{SYMBOLS.sp}
-						to Stickers World bot and{SYMBOLS.nbsp}then click on link in reply.
+						to Stickers World bot and{SYMBOLS.nbsp}then click on link in
+						reply.
 						<br />
-						Bot will be able to upload your sticker{SYMBOLS.nbsp}packs to Telegram.
+						Bot will be able to upload your sticker{SYMBOLS.nbsp}packs to
+						Telegram.
 					</div>
 				</div>
 				<div style={this.styles.block}>
-					<Tappable>
+					<Tappable
+						style={{ cursor: 'pointer' }}
+						onTap={() => this.props.history.push('/create')}
+					>
 						<div style={this.styles.button}>Create sticker</div>
 					</Tappable>
 					<div style={this.styles.caption}>

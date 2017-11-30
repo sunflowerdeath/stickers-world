@@ -8,8 +8,8 @@ import patrick from '!file-loader!@@/patrick.jpg'
 
 const TOP_BAR_HEIGHT = 50
 
-function getPhotoSize({screenWidth, minPhotoSize, margin}) {
-	let count = Math.floor((screenWidth - margin) / (minPhotoSize + margin))
+function getPhotoSize({ screenWidth, minPhotoSize, margin }) {
+	const count = Math.floor((screenWidth - margin) / (minPhotoSize + margin))
 	console.log(count)
 	return (screenWidth - margin * (count + 1)) / count
 }
@@ -24,7 +24,7 @@ export default class SelectView extends React.Component {
 		})
 	}
 	render() {
-		let styles = {
+		const styles = {
 			root: {
 				height: '100%',
 				display: 'flex',
@@ -39,8 +39,7 @@ export default class SelectView extends React.Component {
 				display: 'flex',
 				flexWrap: 'wrap',
 				paddingLeft: 24,
-				paddingBottom: 20,
-				display: 'flex'
+				paddingBottom: 20
 			}
 		}
 
@@ -49,13 +48,11 @@ export default class SelectView extends React.Component {
 			photos.push(<Photo onSelect={this.props.onSelect} size={this.photoSize} />)
 		}
 
-		let topBar = <TopBar>Select photo</TopBar>
+		const topBar = <TopBar>Select photo</TopBar>
 
 		return (
 			<OverlayLayout style={styles.root} top={topBar}>
-				<div style={styles.photos}>
-					{photos}
-				</div>
+				<div style={styles.photos}>{photos}</div>
 			</OverlayLayout>
 		)
 	}
@@ -63,7 +60,7 @@ export default class SelectView extends React.Component {
 
 class Photo extends React.Component {
 	render() {
-		let styles = {
+		const styles = {
 			root: {
 				boxSizing: 'border-box',
 				marginRight: 24,
@@ -76,9 +73,6 @@ class Photo extends React.Component {
 			}
 		}
 
-		return (
-			<Tappable onTap={this.props.onSelect} style={styles.root} />
-		)
+		return <Tappable onTap={this.props.onSelect} style={styles.root} />
 	}
 }
-

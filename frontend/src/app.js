@@ -9,11 +9,7 @@ import LoginView from '@@/views/Login'
 import StickerPacksView from '@@/views/StickerPacks'
 import CreateStickerPackView from '@@/views/CreateStickerPack'
 import StickerPackView from '@@/views/StickerPack'
-import CreateStickerView from '@@/views/CreateSticker'
-import SelectView from '@@/views/Select'
-import AdjustView from '@@/views/Adjust'
-import EditView from '@@/views/Edit'
-import TestView from '@@/views/Test'
+import StickerCreateView from '@@/views/StickerCreate'
 
 const WIDTH = 300
 const HEIGHT = 400
@@ -43,7 +39,7 @@ export default class App extends React.Component {
 					<Route path="/" exact component={LoginView} />
 					<Route path="/packs" exact component={StickerPacksView} />
 					<Route path="/packs/create" exact component={CreateStickerPackView} />
-					<Route path="/packs/:id/create" exact component={CreateStickerView} />
+					<Route path="/packs/:id/create" exact component={StickerCreateView} />
 					<Route
 						path="/packs/:id"
 						exact
@@ -56,9 +52,9 @@ export default class App extends React.Component {
 						}}
 					/>
 					<Route
-						path="/adjust"
+						path="/create"
 						exact
-						render={() => <AdjustView width={WIDTH} height={HEIGHT} />}
+						render={() => <StickerCreateView />}
 					/>
 				</Switch>
 			</BrowserRouter>

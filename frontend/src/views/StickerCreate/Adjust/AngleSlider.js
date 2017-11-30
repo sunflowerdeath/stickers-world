@@ -5,6 +5,7 @@ import Tappable from '@@/components/Tappable'
 export default class AngleSlider extends React.Component {
 	onTapStart() {
 		this.initialValue = this.props.value
+		this.props.onTapStart()
 	}
 
 	onTapMove({ dx }) {
@@ -13,6 +14,10 @@ export default class AngleSlider extends React.Component {
 		value = Math.min(Math.max(value, -45), 45)
 		if (value > -1 && value < 1) value = 0
 		this.props.onChange(value)
+	}
+
+	onTapEnd() {
+		if (this.props.onTapEnd) this.props.onTapEnd()
 	}
 
 	getStyles(props) {
@@ -78,6 +83,7 @@ export default class AngleSlider extends React.Component {
 				style={styles.root}
 				onTapStart={this.onTapStart.bind(this)}
 				onTapMove={this.onTapMove.bind(this)}
+				onTapEnd={this.onTapEnd.bind(this)}
 			>
 				<div style={styles.pointer} />
 				<div
