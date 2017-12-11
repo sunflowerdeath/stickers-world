@@ -30,9 +30,7 @@ export default class CreateStickerView extends Component {
 		if (step === 'select') {
 			return <SelectPhotoView onSelect={this.onSelectPhoto.bind(this)} />
 		} else if (step === 'adjust') {
-			return <AdjustView 
-				image={{ width: WIDTH, height: HEIGHT, src: patrick }}
-			/>
+			return <AdjustView image={{ width: WIDTH, height: HEIGHT, src: patrick }} />
 		} else if (step === 'edit') {
 			return <div>Edit</div>
 		}
@@ -44,7 +42,8 @@ class SaveSticker extends Component {
 		const leftIcon = (
 			<IconButton
 				onClick={() =>
-					this.props.history.push(`/packs/${this.props.match.params.id}`)}
+					this.props.history.push(`/packs/${this.props.match.params.id}`)
+				}
 			>
 				<ArrowBackIcon />
 			</IconButton>

@@ -1,11 +1,6 @@
 module.exports = {
-    extends: [
-        './node_modules/gnoll/config/eslint.js'
-    ],
+    extends: ['gnoll'],
     rules: {
       'react/jsx-filename-extension': 'off'
-    },
-    settings: {
-      'import/resolver': 'webpack'
     }
 }

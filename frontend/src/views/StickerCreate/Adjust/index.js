@@ -1,8 +1,13 @@
-import React from 'react'
+import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import mapValues from 'lodash/mapValues'
+import upperFirst from 'lodash/upperFirst'
 import floral from 'floral'
+import Taply from 'taply'
 
+import FlatButton from 'material-ui/FlatButton'
+
+import bindMethods from '@@/utils/bindMethods'
 import OverlayLayout from '@@/components/OverlayLayout'
 import TopBar from '@@/components/TopBar'
 import Tappable from '@@/components/Tappable'
@@ -20,7 +25,7 @@ import cornerIcon from '!raw-loader!./corner.svg'
 const SCREEN_WIDTH = document.documentElement.clientWidth
 const SCREEN_HEIGHT = document.documentElement.clientHeight
 const TOP_BAR_HEIGHT = 64
-const BOTTOM_PANEL_HEIGHT = 105
+const BOTTOM_PANEL_HEIGHT = 112 + 16
 
 const loadImage = url =>
 	new Promise(resolve => {
@@ -29,37 +34,41 @@ const loadImage = url =>
 		image.src = url
 	})
 
-const getCropCorners = (crop, image) => ({
-	tl: {
-		point: { x: 0, y: 0 },
-		constraint: { minX: 0, minY: 0 }
-	},
-	tr: {
-		point: { x: 0, y: crop.width },
-		constraint: { minX: 0, maxY: image.width }
-	},
-	bl: {
-		point: { x: crop.height, y: 0 },
-		constraint: { maxX: image.height, minY: 0 }
-	},
-	br: {
-		point: { x: crop.height, y: crop.width },
-		constraint: { maxX: image.height, maxY: image.width }
-	}
+const toRad = deg => deg * Math.PI / 180
+
+const toDeg = rad => rad / Math.PI * 180
+
+const rotatePoint = ([x, y], [cx, cy], [dx, dy], angle) => ({
+	x: cx + dx + (x - cx) * Math.cos(angle) - (y - cy) * Math.sin(angle),
+	y: cy + dy + (x - cx) * Math.sin(angle) + (y - cy) * Math.cos(angle)
 })
 
-const rotatePoint = (point, center, angle, delta) => {
-	const { x, y } = point
-	const { x: cx, y: cy } = center
-	const { x: dx, y: dy } = delta
-	const rad = -angle * Math.PI / 180
-	const sin = Math.sin(rad)
-	const cos = Math.cos(rad)
-	return {
-		x: dx + cx + (x - cx) * cos - (y - cy) * sin,
-		y: dy + cy + (x - cx) * sin + (y - cy) * cos
-	}
-}
+const scaleCrop = (crop, scale) => ({
+	...crop,
+	width: crop.width * scale,
+	height: crop.height * scale,
+	left: crop.left + crop.width * (1 - scale) / 2,
+	top: crop.top + crop.height * (1 - scale) / 2
+})
+
+const getCropSize = ({ angle, height, width }) => ({
+	height: height * Math.cos(angle) + width * Math.sin(angle),
+	width: height * Math.sin(angle) + width * Math.cos(angle)
+})
+
+const getCropCorners = ({ width, height }) => ({
+	tl: [0, 0],
+	tr: [width, 0],
+	bl: [0, height],
+	br: [width, height]
+})
+
+const getCornersConstraints = ({ width, height }) => ({
+	tl: { minY: 0, minX: 0 },
+	tr: { minY: 0, maxX: width },
+	bl: { maxY: height, minX: 0 },
+	br: { maxY: height, maxX: width }
+})
 
 const checkConstraint = (point, constraint) => {
 	const { x, y } = point
@@ -72,16 +81,12 @@ const checkConstraint = (point, constraint) => {
 	)
 }
 
-const constrainScale = (point, center, angle, delta, constraint) => {
-	const { x, y } = point
-	const { x: cx, y: cy } = center
-	const { x: dx, y: dy } = delta
+const pointFitScale = ([x, y], [cx, cy], [dx, dy], angle, constraint) => {
 	const { minX, minY, maxX, maxY } = constraint
 	const CX = minX === undefined ? maxX : minX
 	const CY = minY === undefined ? maxY : minY
-	const rad = -angle * Math.PI / 180
-	const sin = Math.sin(rad)
-	const cos = Math.cos(rad)
+	const sin = Math.sin(angle)
+	const cos = Math.cos(angle)
 
 	// C = top - deltaTop + S * ( cx + (x - cx) * cos - (y - cy) * sin )
 	// deltaTop = height * (S - 1) / 2 = S * cx - cx
@@ -94,18 +99,35 @@ const constrainScale = (point, center, angle, delta, constraint) => {
 	return Math.min(xScale, yScale)
 }
 
-const constrainPosition = (crop, image) => {
-	const center = { x: crop.height / 2, y: crop.width / 2 }
-	const delta = { x: crop.top, y: crop.left }
+const fitScale = (crop, image) => {
+	const center = [crop.width / 2, crop.height / 2]
+	const delta = [crop.left, crop.top]
+	const corners = getCropCorners(crop)
+	const constraints = getCornersConstraints(image)
 
+	let scale = 1
+	Object.entries(corners).forEach(([key, point]) => {
+		const constraint = constraints[key]
+		const rotatedPoint = rotatePoint(point, center, delta, crop.angle)
+		if (checkConstraint(rotatedPoint, constraint)) return
+		const pointScale = pointFitScale(point, center, delta, crop.angle, constraint)
+		if (pointScale < scale && pointScale > 0) scale = pointScale
+	})
+
+	return scaleCrop(crop, scale)
+}
+
+const fitPosition = (crop, image) => {
+	const center = [crop.width / 2, crop.height / 2]
+	const delta = [crop.left, crop.top]
 	const corners = getCropCorners(crop, image)
-	const rotatedCorners = mapValues(corners, ({ point }) =>
-		rotatePoint(point, center, crop.angle, delta)
+	const rotatedCorners = mapValues(corners, point =>
+		rotatePoint(point, center, delta, crop.angle)
 	)
-	const top = Math.min(rotatedCorners.tr.x, rotatedCorners.tl.x)
-	const bottom = Math.max(rotatedCorners.br.x, rotatedCorners.bl.x)
-	const left = Math.min(rotatedCorners.bl.y, rotatedCorners.tl.y)
-	const right = Math.max(rotatedCorners.br.y, rotatedCorners.tr.y)
+	const top = Math.min(rotatedCorners.tr.y, rotatedCorners.tl.y)
+	const bottom = Math.max(rotatedCorners.br.y, rotatedCorners.bl.y)
+	const left = Math.min(rotatedCorners.bl.x, rotatedCorners.tl.x)
+	const right = Math.max(rotatedCorners.br.x, rotatedCorners.tr.x)
 
 	const constrained = { ...crop }
 	if (top < 0) constrained.top -= top
@@ -115,35 +137,82 @@ const constrainPosition = (crop, image) => {
 	return constrained
 }
 
-const scaleCrop = (crop, scale) => ({
-	...crop,
-	width: crop.width * scale,
-	height: crop.height * scale,
-	left: crop.left + crop.width * (1 - scale) / 2,
-	top: crop.top + crop.height * (1 - scale) / 2
-})
+const RESIZE_DIRECTIONS = {
+	// resizeX, resizeY, oppositeCorner
+	t: [0, -1, []],
+	tl: [-1, -1, 'br'],
+	tr: [1, -1, 'bl'],
+	b: [0, 1, []],
+	bl: [-1, 1, 'tr'],
+	br: [1, 1, 'tl'],
+	r: [1, 0, []],
+	l: [-1, 0, []]
+}
+
+const resizeCrop = (crop, dx, dy, direction) => {
+	const [resizeX, resizeY, oppositeCorner] = RESIZE_DIRECTIONS[direction]
+	const rcrop = {
+		...crop,
+		width: crop.width + resizeX * dx,
+		height: crop.height + resizeY * dy,
+		top: resizeY === -1 ? crop.top + dy : crop.top,
+		left: resizeX === -1 ? crop.left + dx : crop.left
+	}
+
+	// point that is opposite to resized corner should remain at the same position
+	const point = rotatePoint(
+		getCropCorners(crop)[oppositeCorner],
+		[crop.width / 2, crop.height / 2],
+		[crop.left, crop.top],
+		-crop.angle
+	)
+	const rpoint = rotatePoint(
+		getCropCorners(rcrop)[oppositeCorner],
+		[rcrop.width / 2, rcrop.height / 2],
+		[rcrop.left, rcrop.top],
+		-crop.angle
+	)
+	return {
+		...rcrop,
+		left: rcrop.left - (rpoint.x - point.x),
+		top: rcrop.top - (rpoint.y - point.y)
+	}
+}
 
 @floral
-export default class AdjustView extends React.Component {
+@bindMethods(
+	'onPanStart',
+	'onPanMove',
+	'onPanEnd',
+	'onRotateStart',
+	'onRotate',
+	'onResizeStart',
+	'onResizeMove',
+	'reset'
+)
+export default class AdjustView extends Component {
 	static propTypes = {
 		image: PropTypes.shape({
 			width: PropTypes.number.isRequired,
 			height: PropTypes.number.isRequired,
 			src: PropTypes.string.isRequired
-		}).isRequired
+		}).isRequired,
+		onGoBack: PropTypes.func.isRequired,
+		onGoNext: PropTypes.func.isRequired
 	}
 
 	static styles = (props, state) => {
 		const { crop, aspect, isPanning } = state
 		const { image } = props
 
-		const DISTANCE_TO_EDGE = 10
-		const horizScale = (SCREEN_WIDTH - DISTANCE_TO_EDGE * 2) / crop.width
+		const VERT_PADDING = 10
+		const HORIZ_PADDING = 20
+		const horizScale = (SCREEN_WIDTH - HORIZ_PADDING * 2) / crop.width
 		const vertScale =
 			(SCREEN_HEIGHT -
 				TOP_BAR_HEIGHT -
 				BOTTOM_PANEL_HEIGHT -
-				DISTANCE_TO_EDGE * 2) /
+				VERT_PADDING * 2) /
 			crop.height
 		const scale = Math.min(horizScale, vertScale)
 
@@ -166,27 +235,27 @@ export default class AdjustView extends React.Component {
 		}
 
 		const corners = {
-			cornerTopLeft: {
+			cornerTl: {
 				...corner,
 				top: -14,
 				left: -14,
 				cursor: 'nwse-resize'
 			},
-			cornerTopRight: {
+			cornerTr: {
 				...corner,
 				top: -14,
 				right: -14,
 				transform: 'rotate(90deg)',
 				cursor: 'nesw-resize'
 			},
-			cornerBottomLeft: {
+			cornerBl: {
 				...corner,
 				bottom: -14,
 				left: -14,
 				transform: 'rotate(270deg)',
 				cursor: 'nesw-resize'
 			},
-			cornerBottomRight: {
+			cornerBr: {
 				...corner,
 				bottom: -14,
 				right: -14,
@@ -209,7 +278,7 @@ export default class AdjustView extends React.Component {
 				transform: [
 					`translateY(${top - crop.top * scale}px)`,
 					`translateX(${left - crop.left * scale}px)`,
-					`rotate(${-crop.angle}deg)`
+					`rotate(${crop.angle}rad)`
 				].join(' '),
 				transformOrigin: `${originLeft}px ${originTop}px`,
 				willChange: 'transform, width, height, opacity',
@@ -272,16 +341,16 @@ export default class AdjustView extends React.Component {
 		this.setState({ isPanning: true })
 	}
 
-	onPanMove({ dx, dy }) {
+	onPanMove(event, touches) {
+		const { dx, dy } = touches[0]
 		const { image } = this.props
-
-		const rad = -this.state.crop.angle * Math.PI / 180
-		const crop = {
-			...this.state.crop,
-			left: this.initialCrop.left - (dx * Math.cos(rad) + dy * Math.sin(rad)),
-			top: this.initialCrop.top + (dx * Math.sin(rad) - dy * Math.cos(rad))
+		const crop = this.initialCrop
+		const movedCrop = {
+			...crop,
+			left: crop.left - (dx * Math.cos(crop.angle) + dy * Math.sin(crop.angle)),
+			top: crop.top + (dx * Math.sin(crop.angle) - dy * Math.cos(crop.angle))
 		}
-		const constrainedCrop = constrainPosition(crop, image)
+		const constrainedCrop = fitPosition(movedCrop, image)
 		this.setState({ crop: constrainedCrop })
 	}
 
@@ -293,43 +362,42 @@ export default class AdjustView extends React.Component {
 		this.initialCrop = this.state.crop
 	}
 
-	onRotate(angle) {
+	onRotate(deg) {
 		const { image } = this.props
-
+		const angle = toRad(-deg)
 		const crop = this.initialCrop
-		const corners = getCropCorners(crop, image)
-		const center = { x: crop.height / 2, y: crop.width / 2 }
-		const delta = { x: crop.top, y: crop.left }
+		this.setState({ crop: fitScale({ ...crop, angle }, image) })
+	}
 
-		let scale = 1
-		Object.values(corners).forEach(({ point, constraint }) => {
-			const rotatedPoint = rotatePoint(point, center, angle, delta)
-			if (checkConstraint(rotatedPoint, constraint)) return
+	onResizeStart(event, direction) {
+		event.stopPropagation()
+		this.direction = direction
+		this.initialCrop = this.state.crop
+	}
 
-			const constrainedScale = constrainScale(
-				point,
-				center,
-				angle,
-				delta,
-				constraint
-			)
-			if (constrainedScale < scale && constrainedScale > 0) {
-				scale = constrainedScale
+	onResizeMove(event, touches) {
+		event.stopPropagation()
+		const { dx, dy } = touches[0]
+		const resizedCrop = resizeCrop(this.initialCrop, dx, dy, this.direction)
+		const constrainedCrop = fitPosition(resizedCrop, this.props.image)
+		this.setState({ crop: constrainedCrop })
+	}
+
+	// PINCH
+	// onPinchMove(dx, dy, scale) {}
+
+	reset() {
+		const { image } = this.props
+		this.setState({
+			crop: {
+				top: 0,
+				left: 0,
+				width: image.width,
+				height: image.height,
+				angle: 0,
+				scale: 1
 			}
 		})
-
-		const scaledCrop = scaleCrop({ ...crop, angle }, scale)
-		this.setState({ crop: scaledCrop })
-	}
-
-	onResizeStart(direction) {
-	}
-
-	onResizeMove(dx, dy) {
-	}
-
-	onPinchMove(dx, dy, scale) {
-
 	}
 
 	paintCrop() {
@@ -341,8 +409,7 @@ export default class AdjustView extends React.Component {
 		const originLeft = crop.width / 2
 		const originTop = crop.height / 2
 		ctx.translate(originLeft, originTop)
-		const rad = -crop.angle * Math.PI / 180
-		ctx.rotate(rad)
+		ctx.rotate(crop.angle)
 		ctx.drawImage(this.imageRef, -originLeft - crop.left, -originTop - crop.top)
 		ctx.restore()
 	}
@@ -360,57 +427,86 @@ export default class AdjustView extends React.Component {
 				style={{ background: 'none' }}
 			>
 				<div>Crop photo</div>
-				{/*<AspectSwitcher
+				{/*
+				<AspectSwitcher
 					value={this.state.aspect}
 					onChange={aspect => this.setState({ aspect })}
 				/>
 				<Tappable onTap={this.changeOrientation.bind(this)}>
 					<Icon icon={rotateIcon} />
-				</Tappable>*/}
+				</Tappable>
+				*/}
 			</TopBar>
 		)
 
-		const angleSlider = (
-			<AngleSlider
-				value={crop.angle}
-				onTapStart={this.onRotateStart.bind(this)}
-				onChange={this.onRotate.bind(this)}
-			/>
+		const bottom = (
+			<div>
+				<AngleSlider
+					value={toDeg(-crop.angle)}
+					onRotateStart={this.onRotateStart}
+					onRotate={this.onRotate}
+					style={{ marginBottom: 15 }}
+				/>
+				<div
+					style={{
+						height: 48,
+						display: 'flex',
+						alignItems: 'center',
+						justifyContent: 'space-between'
+					}}
+				>
+					<FlatButton>ASPECT</FlatButton>
+					<FlatButton onClick={this.reset}>RESET</FlatButton>
+					<FlatButton>ROTATE</FlatButton>
+				</div>
+			</div>
 		)
 
+		const corners = ['tl', 'tr', 'bl', 'br'].map(direction => (
+			<Taply
+				key={direction}
+				onTapStart={event => this.onResizeStart(event, direction)}
+				onTapMove={this.onResizeMove}
+			>
+				<SvgIcon
+					svg={cornerIcon}
+					style={this.styles[`corner${upperFirst(direction)}`]}
+				/>
+			</Taply>
+		))
+
 		return (
-			<OverlayLayout top={topBar} bottom={angleSlider}>
-				<Tappable
-					style={this.styles.container}
-					onTapStart={this.onPanStart.bind(this)}
-					onTapMove={this.onPanMove.bind(this)}
-					onTapEnd={this.onPanEnd.bind(this)}
+			<OverlayLayout top={topBar} bottom={bottom}>
+				<Taply
+					onTapStart={this.onPanStart}
+					onTapMove={this.onPanMove}
+					onTapEnd={this.onPanEnd}
 				>
-					<img
-						style={this.styles.image}
-						src={image.src}
-						ref={ref => {
-							this.imageRef = ref
-						}}
-						onLoad={() => {
-							this.imageLoaded = true
-						}}
-					/>
-					<div style={this.styles.crop}>
-						<canvas
-							style={this.styles.canvas}
-							width={crop.width}
-							height={crop.height}
+					<div style={this.styles.container}>
+						<img
+							alt=""
+							style={this.styles.image}
+							src={image.src}
 							ref={ref => {
-								this.canvasRef = ref
+								this.imageRef = ref
+							}}
+							onLoad={() => {
+								this.imageLoaded = true
 							}}
 						/>
-						<SvgIcon svg={cornerIcon} style={this.styles.cornerTopLeft} />
-						<SvgIcon svg={cornerIcon} style={this.styles.cornerTopRight} />
-						<SvgIcon svg={cornerIcon} style={this.styles.cornerBottomLeft} />
-						<SvgIcon svg={cornerIcon} style={this.styles.cornerBottomRight} />
+						<div style={this.styles.crop}>
+							<canvas
+								style={this.styles.canvas}
+								width={crop.width}
+								height={crop.height}
+								ref={ref => {
+									this.canvasRef = ref
+								}}
+							/>
+							{corners}
+						</div>
 					</div>
-				</Tappable>
+				</Taply>
 			</OverlayLayout>
 		)
 	}
