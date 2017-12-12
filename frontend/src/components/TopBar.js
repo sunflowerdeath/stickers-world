@@ -19,13 +19,13 @@ export default class TopBar extends React.Component {
 			WebkitBackdropFilter: 'blur(10px)'
 		}
 
-		let title = {
+		const title = {
 			fontSize: 20,
 			fontWeight: 500,
 			flexGrow: 1
 		}
 
-		let icon = {
+		const icon = {
 			display: 'flex',
 			alignItems: 'center',
 			justifyContent: 'center',
@@ -38,7 +38,7 @@ export default class TopBar extends React.Component {
 			leftIcon = {
 				...icon,
 				marginRight: 8,
-				marginLeft: -16,
+				marginLeft: -16
 			}
 		}
 
@@ -51,7 +51,7 @@ export default class TopBar extends React.Component {
 			}
 		}
 
-		return {root, title, leftIcon, rightIcon}
+		return { root, title, leftIcon, rightIcon }
 	}
 
 	render() {

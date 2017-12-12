@@ -1,6 +1,4 @@
 import React, { Component } from 'react'
-import { Route, Switch } from 'react-router-dom'
-import { withRouter } from 'react-router'
 import IconButton from 'material-ui/IconButton'
 import TextField from 'material-ui/TextField'
 import FlatButton from 'material-ui/FlatButton'
@@ -10,6 +8,7 @@ import TopBar from '@@/components/TopBar'
 
 import SelectPhotoView from './SelectPhoto'
 import AdjustView from './Adjust'
+import EditView from './Edit'
 
 import patrick from '!file-loader!@@/patrick.jpg'
 const WIDTH = 249
@@ -30,9 +29,28 @@ export default class CreateStickerView extends Component {
 		if (step === 'select') {
 			return <SelectPhotoView onSelect={this.onSelectPhoto.bind(this)} />
 		} else if (step === 'adjust') {
-			return <AdjustView image={{ width: WIDTH, height: HEIGHT, src: patrick }} />
+			return (
+				<AdjustView
+					image={{ width: WIDTH, height: HEIGHT, src: patrick }}
+					onGoBack={() => {
+						this.setState({ step: 'select' })
+					}}
+					onGoNext={() => {
+						this.setState({ step: 'edit' })
+					}}
+				/>
+			)
 		} else if (step === 'edit') {
-			return <div>Edit</div>
+			return (
+				<EditView
+					onGoBack={() => {
+						this.setState({ step: 'adjust' })
+					}}
+					onGoNext={() => {
+						console.log('OK')
+					}}
+				/>
+			)
 		}
 	}
 }

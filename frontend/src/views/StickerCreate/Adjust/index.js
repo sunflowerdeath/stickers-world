@@ -8,16 +8,33 @@ import Taply from 'taply'
 import FlatButton from 'material-ui/FlatButton'
 
 import bindMethods from '@@/utils/bindMethods'
+import loadImage from '@@/utils/loadImage'
 import OverlayLayout from '@@/components/OverlayLayout'
 import TopBar from '@@/components/TopBar'
-import Tappable from '@@/components/Tappable'
 import Icon from '@@/components/Icon'
 import SvgIcon from '@@/components/SvgIcon'
 
 // import AspectSwitcher from './AspectSwitcher'
 import AngleSlider from './AngleSlider'
 
-let arrowLeftIcon
+/*
+TODO
++ !  Constrain resize
+-    Side resize handles
+-    Pinch scale
+-    Fix mouse resize
+-    Show resize crop and original crop
+- !  Scale event dx/dy
+-    Min crop size
+- !  Change orientation
+-    Fix focus in taply
+- !+ Aspect - rectangle, circle
+-    React to screen size change
+-    Fix imports warnings
+-    Taply docs
+*/
+
+import chevronLeftSvg from '!raw-loader!@@/icons/chevron-left.svg'
 let arrowRightIcon
 import rotateIcon from '!raw-loader!@@/icons/rotate.svg'
 import cornerIcon from '!raw-loader!./corner.svg'
@@ -26,13 +43,6 @@ const SCREEN_WIDTH = document.documentElement.clientWidth
 const SCREEN_HEIGHT = document.documentElement.clientHeight
 const TOP_BAR_HEIGHT = 64
 const BOTTOM_PANEL_HEIGHT = 112 + 16
-
-const loadImage = url =>
-	new Promise(resolve => {
-		const image = new Image()
-		image.onload = resolve
-		image.src = url
-	})
 
 const toRad = deg => deg * Math.PI / 180
 
@@ -51,10 +61,13 @@ const scaleCrop = (crop, scale) => ({
 	top: crop.top + crop.height * (1 - scale) / 2
 })
 
-const getCropSize = ({ angle, height, width }) => ({
-	height: height * Math.cos(angle) + width * Math.sin(angle),
-	width: height * Math.sin(angle) + width * Math.cos(angle)
-})
+const getCropSize = ({ angle, height, width }) => {
+	const absAngle = Math.abs(angle)
+	return {
+		height: height * Math.cos(absAngle) + width * Math.sin(absAngle),
+		width: height * Math.sin(absAngle) + width * Math.cos(absAngle)
+	}
+}
 
 const getCropCorners = ({ width, height }) => ({
 	tl: [0, 0],
@@ -179,6 +192,13 @@ const resizeCrop = (crop, dx, dy, direction) => {
 	}
 }
 
+const fitFullScale = (crop, image) => {
+	const { width, height } = getCropSize(crop)
+	if (width < image.width && height < image.height) return crop
+	const scale = Math.min(image.width / width, image.height / height)
+	return scaleCrop(crop, scale)
+}
+
 @floral
 @bindMethods(
 	'onPanStart',
@@ -270,6 +290,9 @@ export default class AdjustView extends Component {
 				height: '100%',
 				overflow: 'hidden',
 				position: 'absolute'
+			},
+			icon: {
+				fill: 'white'
 			},
 			image: {
 				position: 'absolute',
@@ -376,10 +399,13 @@ export default class AdjustView extends Component {
 	}
 
 	onResizeMove(event, touches) {
-		event.stopPropagation()
 		const { dx, dy } = touches[0]
+		const { image } = this.props
+
+		event.stopPropagation()
 		const resizedCrop = resizeCrop(this.initialCrop, dx, dy, this.direction)
-		const constrainedCrop = fitPosition(resizedCrop, this.props.image)
+		const fitCrop = fitFullScale(resizedCrop, image)
+		const constrainedCrop = fitPosition(fitCrop, image)
 		this.setState({ crop: constrainedCrop })
 	}
 
@@ -420,10 +446,16 @@ export default class AdjustView extends Component {
 
 		const topBar = (
 			<TopBar
-				leftIcon={<Icon icon={arrowLeftIcon} />}
-				onTapLeftIcon={this.props.onGoBack}
-				rightIcon={<Icon icon={arrowRightIcon} />}
-				onTapRightIcon={this.props.onGoNext}
+				leftIcon={
+					<Taply onTap={this.props.onGoBack}>
+						<SvgIcon svg={chevronLeftSvg} style={this.styles.icon} />
+					</Taply>
+				}
+				rightIcon={
+					<Taply onTap={this.props.onGoNext}>
+						<SvgIcon svg={chevronLeftSvg} style={this.styles.icon} />
+					</Taply>
+				}
 				style={{ background: 'none' }}
 			>
 				<div>Crop photo</div>
