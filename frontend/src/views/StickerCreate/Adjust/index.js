@@ -208,7 +208,8 @@ const fitFullScale = (crop, image) => {
 	'onRotate',
 	'onResizeStart',
 	'onResizeMove',
-	'reset'
+	'reset',
+	'onTapNext'
 )
 export default class AdjustView extends Component {
 	static propTypes = {
@@ -412,6 +413,13 @@ export default class AdjustView extends Component {
 	// PINCH
 	// onPinchMove(dx, dy, scale) {}
 
+	onTapNext() {
+		const { crop } = this.state
+		const ctx = this.canvasRef.getContext('2d')
+		const image = ctx.getImageData(0, 0, crop.width, crop.height)
+		this.props.onGoNext({ image })
+	}
+
 	reset() {
 		const { image } = this.props
 		this.setState({
@@ -452,7 +460,7 @@ export default class AdjustView extends Component {
 					</Taply>
 				}
 				rightIcon={
-					<Taply onTap={this.props.onGoNext}>
+					<Taply onTap={this.onTapNext}>
 						<SvgIcon svg={chevronLeftSvg} style={this.styles.icon} />
 					</Taply>
 				}

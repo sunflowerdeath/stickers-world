@@ -35,14 +35,15 @@ export default class CreateStickerView extends Component {
 					onGoBack={() => {
 						this.setState({ step: 'select' })
 					}}
-					onGoNext={() => {
-						this.setState({ step: 'edit' })
+					onGoNext={({ image }) => {
+						this.setState({ step: 'edit', image })
 					}}
 				/>
 			)
 		} else if (step === 'edit') {
 			return (
 				<EditView
+					image={this.state.image}
 					onGoBack={() => {
 						this.setState({ step: 'adjust' })
 					}}
