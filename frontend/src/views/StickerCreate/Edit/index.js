@@ -7,13 +7,30 @@ import Slider from 'material-ui/Slider'
 import FlatButton from 'material-ui/FlatButton'
 import { Tabs, Tab } from 'material-ui/Tabs'
 
+import bg from './bg.svg'
 import chevronLeftSvg from '!raw-loader!@@/icons/chevron-left.svg'
 
 import bindMethods from '@@/utils/bindMethods'
 import SvgIcon from '@@/components/SvgIcon'
 import TopBar from '@@/components/TopBar'
 
-const normalizeCoords = ({ x, y }, elem) => {
+const SCREEN_WIDTH = document.documentElement.clientWidth
+const SCREEN_HEIGHT = document.documentElement.clientHeight
+const TOP_BAR_HEIGHT = 64
+const BOTTOM_BAR_HEIGHT = 48 * 3
+const CANVAS_HEIGHT = SCREEN_HEIGHT - TOP_BAR_HEIGHT - BOTTOM_BAR_HEIGHT
+const CANVAS_WIDTH = SCREEN_WIDTH
+
+const getTransformedImageCoords = ({ canvas, image, scale, translate }) => {
+	return {
+		x: canvas.width / 2 - scale * image.width / 2,
+		y: canvas.height / 2 - scale * image.height / 2,
+		width: image.width * scale,
+		height: image.height * scale
+	}
+}
+
+const getRelativeCoords = ({ x, y }, elem) => {
 	const { left, top } = elem.getBoundingClientRect()
 	return { x: x - left, y: y - top }
 }
@@ -27,26 +44,42 @@ class EditView extends Component {
 		onGoNext: PropTypes.func.isRequired
 	}
 
-	static styles = {
-		root: {
-			display: 'flex',
-			flexDirection: 'column',
-			height: '100%'
-		},
-		icon: {
-			fill: 'white'
-		},
-		image: {
-			flexGrow: 1,
-			background: `linear-gradient(135deg, rgba(216,224,222,1) 0%,rgba(130,157,152,1) 48%,rgba(14,14,14,1) 100%)`
-		},
-		tab: {
-			color: 'white'
-		},
-		bar: {
-			display: 'flex',
-			padding: '0 24px',
-			height: 48
+	static styles = (props, state) => {
+		const { scale, multiplier, brushSize } = state
+
+		return {
+			root: {
+				display: 'flex',
+				flexDirection: 'column',
+				height: '100%'
+			},
+			icon: {
+				fill: 'white'
+			},
+			image: {
+				position: 'relative',
+				flexGrow: 1,
+				backgroundColor: 'white',
+				backgroundImage: `url(${bg})`,
+				backgroundSize: '30px 30px'
+			},
+			brush: {
+				position: 'absolute',
+				width: brushSize * multiplier,
+				height: brushSize * multiplier,
+				transform: 'translateY(-50%) translateX(-50%)',
+				borderRadius: '50%',
+				border: '2px solid white',
+				filter: 'drop-shadow(1px 1px 2px black)'
+			},
+			tab: {
+				color: 'white'
+			},
+			bar: {
+				display: 'flex',
+				padding: '0 24px',
+				height: 48
+			}
 		}
 	}
 
@@ -64,14 +97,27 @@ class EditView extends Component {
 		this.imageCanvas.height = image.height
 		const ctx = this.imageCanvas.getContext('2d')
 		ctx.putImageData(image, 0, 0)
-	}
 
-	state = {
-		selectedTab: 'mask'
+		const multiplier = Math.min(
+			(SCREEN_HEIGHT - TOP_BAR_HEIGHT - BOTTOM_BAR_HEIGHT) / image.height,
+			SCREEN_WIDTH / image.width
+		)
+
+		this.state = {
+			selectedTab: 'mask',
+			paintMasked: false,
+			brushSize: 10,
+			multiplier,
+			scale: 1
+		}
 	}
 
 	componentDidMount() {
 		this.paint()
+	}
+
+	componentDidUpdate(prevProps, prevState) {
+		if (prevState.paintMasked !== this.state.paintMasked) this.paint()
 	}
 
 	onTapBack() {
@@ -83,48 +129,92 @@ class EditView extends Component {
 	}
 
 	onPaintStart(event, touches) {
-		const { x, y } = normalizeCoords(touches[0], this.canvasRef)
-		this.prevCoords = { x, y }
+		const { image } = this.props
+		const coords = touches[0]
+		const scale = this.state.scale * this.state.multiplier
+		const relCoords = getRelativeCoords(coords, this.canvasRef)
+		const imageCoords = getTransformedImageCoords({
+			canvas: { width: CANVAS_WIDTH, height: CANVAS_HEIGHT },
+			image,
+			scale,
+			translate: { x: 0, y: 0 }
+		})
+		const normCoords = {
+			x: (relCoords.x - imageCoords.x) / scale,
+			y: (relCoords.y - imageCoords.y) / scale
+		}
+
+		this.prevCoords = normCoords
+		this.setState({ isPainting: true })
 	}
 
 	onPaintMove(event, touches) {
-		const { erase } = this.state
+		event.preventDefault()
+		const { image } = this.props
+		const { erase, brushSize } = this.state
 		const { x: x0, y: y0 } = this.prevCoords
-		const { x, y } = normalizeCoords(touches[0], this.canvasRef)
+
+		const scale = this.state.scale * this.state.multiplier
+		const coords = touches[0]
+		const relCoords = getRelativeCoords(coords, this.canvasRef)
+		const imageCoords = getTransformedImageCoords({
+			canvas: { width: CANVAS_WIDTH, height: CANVAS_HEIGHT },
+			image,
+			scale,
+			translate: { x: 0, y: 0 }
+		})
+		const normCoords = {
+			x: (relCoords.x - imageCoords.x) / scale,
+			y: (relCoords.y - imageCoords.y) / scale
+		}
 
 		const ctx = this.maskCanvas.getContext('2d')
 
 		ctx.globalCompositeOperation = erase ? 'destination-out' : 'source-over'
 		ctx.strokeStyle = 'blue'
-		ctx.lineWidth = 15
+		ctx.lineWidth = this.state.multiplier * brushSize
 		ctx.lineCap = 'round'
 		ctx.beginPath()
 		ctx.moveTo(x0, y0)
-		ctx.lineTo(x, y)
+		ctx.lineTo(normCoords.x, normCoords.y)
 		ctx.stroke()
 
-		this.prevCoords = { x, y }
+		this.prevCoords = normCoords
+
+		this.brushRef.style.left = `${relCoords.x}px`
+		this.brushRef.style.top = `${relCoords.y}px`
 
 		this.paint()
 	}
 
 	paint() {
 		const { image } = this.props
+		const { paintMasked } = this.state
 		const ctx = this.canvasRef.getContext('2d')
 
 		// paint image
 		ctx.globalAlpha = 1
 		ctx.globalCompositeOperation = 'source-over'
-		ctx.putImageData(image, 0, 0)
 
-		// remove masked
+		const scale = this.state.scale * this.state.multiplier
+
+		const { x, y, width, height } = getTransformedImageCoords({
+			canvas: { width: CANVAS_WIDTH, height: CANVAS_HEIGHT },
+			image,
+			scale,
+			translate: { x: 0, y: 0 }
+		})
+		ctx.drawImage(this.imageCanvas, x, y, width, height)
+
 		ctx.globalCompositeOperation = 'destination-out'
-		ctx.drawImage(this.maskCanvas, 0, 0)
+		ctx.drawImage(this.maskCanvas, x, y, width, height)
 
 		// paint transparent image
-		ctx.globalCompositeOperation = 'source-over'
-		ctx.globalAlpha = 0.2
-		ctx.drawImage(this.imageCanvas, 0, 0)
+		if (paintMasked) {
+			ctx.globalCompositeOperation = 'source-over'
+			ctx.globalAlpha = 0.5
+			ctx.drawImage(this.imageCanvas, x, y, width, height)
+		}
 	}
 
 	renderTopBar() {
@@ -146,14 +236,33 @@ class EditView extends Component {
 	renderMaskTab() {
 		return (
 			<div style={this.styles.tab}>
-				<FlatButton
-					label="PAINT"
-					onClick={() => this.setState({ erase: false })}
-				/>
-				<FlatButton
-					label="ERASE"
-					onClick={() => this.setState({ erase: true })}
-				/>
+				<div style={this.styles.bar}>
+					<FlatButton
+						label="MASK"
+						onClick={() => this.setState({ erase: false })}
+					/>
+					<FlatButton
+						label="UNMASK"
+						onClick={() => this.setState({ erase: true })}
+					/>
+					<FlatButton
+						label="SHOW"
+						onClick={() =>
+							this.setState({ paintMasked: !this.state.paintMasked })
+						}
+					/>
+				</div>
+				<div style={this.styles.bar}>
+					<Slider
+						style={{ width: 150 }}
+						sliderStyle={{ margin: 0 }}
+						min={5}
+						max={25}
+						step={1}
+						value={this.state.brushSize}
+						onChange={(event, value) => this.setState({ brushSize: value })}
+					/>
+				</div>
 			</div>
 		)
 	}
@@ -207,6 +316,7 @@ class EditView extends Component {
 
 	renderImage() {
 		const { image } = this.props
+		const { isPainting } = this.state
 
 		return (
 			<Taply
@@ -220,9 +330,17 @@ class EditView extends Component {
 						ref={ref => {
 							this.canvasRef = ref
 						}}
-						width={image.width}
-						height={image.height}
+						width={CANVAS_WIDTH}
+						height={CANVAS_HEIGHT}
 					/>
+					{isPainting && (
+						<div
+							style={this.styles.brush}
+							ref={ref => {
+								this.brushRef = ref
+							}}
+						/>
+					)}
 				</div>
 			</Taply>
 		)
