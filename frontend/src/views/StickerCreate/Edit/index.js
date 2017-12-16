@@ -9,26 +9,101 @@ import { Tabs, Tab } from 'material-ui/Tabs'
 
 import bg from './bg.svg'
 import chevronLeftSvg from '!raw-loader!@@/icons/chevron-left.svg'
+import brushSvg from '!raw-loader!@@/icons/brush.svg'
+import eraserSvg from '!raw-loader!@@/icons/eraser.svg'
+import visibilitySvg from '!raw-loader!@@/icons/visibility.svg'
+import visibilityOffSvg from '!raw-loader!@@/icons/visibility-off.svg'
 
 import bindMethods from '@@/utils/bindMethods'
 import SvgIcon from '@@/components/SvgIcon'
 import TopBar from '@@/components/TopBar'
 
+const iconButtonStyle = {
+	borderRadius: '50%',
+	width: 24,
+	height: 24,
+	padding: 12,
+	flexShrink: 0,
+	outline: 'none',
+	transition: 'background 0.25s',
+	marginLeft: -12,
+	marginRight: -12
+}
+const IconButton = ({ svg, onTap, fill, style }) => (
+	<Taply onTap={onTap}>
+		<SvgIcon
+			svg={svg}
+			style={{
+				...iconButtonStyle,
+				fill,
+				...style
+			}}
+		/>
+	</Taply>
+)
+
+const BACKGROUNDS = {
+	black: 'black',
+	white: 'white',
+	chekers: '123',
+	photo: '123'
+}
+
+@floral
+class BackgroundSwitcher extends Component {
+	static propTypes = {
+		value: PropTypes.oneOf(['white', 'black', 'checkers', 'photo']).isRequired,
+		onChange: PropTypes.func.isRequried
+	}
+
+	static styles = () => ({
+		root: {
+			display: 'flex'
+		},
+		item: {
+			width: 24,
+			height: 24,
+			border: '2px solid #ccc',
+			borderRadius: 2,
+			boxSizing: 'border-box',
+			marginRight: 8
+		},
+		isSelected: {
+			border: '2px solid white'
+		}
+	})
+
+	render() {
+		const { value } = this.props
+		const items = Object.entries(BACKGROUNDS).map(([key, background]) => {
+			const style = {
+				...this.styles.item,
+				...(value === key && this.styles.isSelected),
+				background
+			}
+			return (
+				<Taply key={key} onTap={() => this.props.onChange(key)}>
+					<div style={style} />
+				</Taply>
+			)
+		})
+		return <div style={this.styles.root}>{items}</div>
+	}
+}
+
 const SCREEN_WIDTH = document.documentElement.clientWidth
 const SCREEN_HEIGHT = document.documentElement.clientHeight
 const TOP_BAR_HEIGHT = 64
-const BOTTOM_BAR_HEIGHT = 48 * 3
+const BOTTOM_BAR_HEIGHT = 48 * 2
 const CANVAS_HEIGHT = SCREEN_HEIGHT - TOP_BAR_HEIGHT - BOTTOM_BAR_HEIGHT
 const CANVAS_WIDTH = SCREEN_WIDTH
 
-const getTransformedImageCoords = ({ canvas, image, scale, translate }) => {
-	return {
-		x: canvas.width / 2 - scale * image.width / 2,
-		y: canvas.height / 2 - scale * image.height / 2,
-		width: image.width * scale,
-		height: image.height * scale
-	}
-}
+const getTransformedImageCoords = ({ canvas, image, scale, translate }) => ({
+	x: canvas.width / 2 - scale * image.width / 2,
+	y: canvas.height / 2 - scale * image.height / 2,
+	width: image.width * scale,
+	height: image.height * scale
+})
 
 const getRelativeCoords = ({ x, y }, elem) => {
 	const { left, top } = elem.getBoundingClientRect()
@@ -36,7 +111,7 @@ const getRelativeCoords = ({ x, y }, elem) => {
 }
 
 @floral
-@bindMethods('onTapBack', 'onTapDone', 'onPaintStart', 'onPaintMove')
+@bindMethods('onTapBack', 'onTapDone', 'onMaskStart', 'onMaskMove', 'onMaskEnd')
 class EditView extends Component {
 	static propTypes = {
 		image: PropTypes.instanceOf(ImageData).isRequired,
@@ -45,7 +120,25 @@ class EditView extends Component {
 	}
 
 	static styles = (props, state) => {
-		const { scale, multiplier, brushSize } = state
+		const { brushSize, showBrushPreview } = state
+
+		const brush = {
+			position: 'absolute',
+			width: brushSize,
+			height: brushSize,
+			boxSizing: 'border-box',
+			transform: 'translateY(-50%) translateX(-50%)',
+			borderRadius: '50%',
+			border: '2px solid white',
+			filter: 'drop-shadow(1px 1px 2px black)'
+		}
+
+		const brushPreview = showBrushPreview && {
+			...brush,
+			border: '2px dashed white',
+			top: 'calc(100% - 32px)',
+			left: '50%'
+		}
 
 		return {
 			root: {
@@ -63,22 +156,16 @@ class EditView extends Component {
 				backgroundImage: `url(${bg})`,
 				backgroundSize: '30px 30px'
 			},
-			brush: {
-				position: 'absolute',
-				width: brushSize * multiplier,
-				height: brushSize * multiplier,
-				transform: 'translateY(-50%) translateX(-50%)',
-				borderRadius: '50%',
-				border: '2px solid white',
-				filter: 'drop-shadow(1px 1px 2px black)'
-			},
+			brush,
+			brushPreview,
 			tab: {
 				color: 'white'
 			},
 			bar: {
 				display: 'flex',
 				padding: '0 24px',
-				height: 48
+				height: 48,
+				alignItems: 'center'
 			}
 		}
 	}
@@ -98,17 +185,18 @@ class EditView extends Component {
 		const ctx = this.imageCanvas.getContext('2d')
 		ctx.putImageData(image, 0, 0)
 
-		const multiplier = Math.min(
-			(SCREEN_HEIGHT - TOP_BAR_HEIGHT - BOTTOM_BAR_HEIGHT) / image.height,
-			SCREEN_WIDTH / image.width
+		const scaleMultiplier = Math.min(
+			(SCREEN_HEIGHT - TOP_BAR_HEIGHT - BOTTOM_BAR_HEIGHT) / (image.height + 20),
+			SCREEN_WIDTH / (image.width + 20)
 		)
 
 		this.state = {
 			selectedTab: 'mask',
+			background: 'chekers',
 			paintMasked: false,
-			brushSize: 10,
-			multiplier,
-			scale: 1
+			brushSize: 30,
+			scale: 1,
+			scaleMultiplier
 		}
 	}
 
@@ -117,7 +205,7 @@ class EditView extends Component {
 	}
 
 	componentDidUpdate(prevProps, prevState) {
-		if (prevState.paintMasked !== this.state.paintMasked) this.paint()
+		if (prevState.showMasked !== this.state.showMasked) this.paint()
 	}
 
 	onTapBack() {
@@ -128,89 +216,88 @@ class EditView extends Component {
 		this.props.onGoNext()
 	}
 
-	onPaintStart(event, touches) {
-		const { image } = this.props
-		const coords = touches[0]
-		const scale = this.state.scale * this.state.multiplier
-		const relCoords = getRelativeCoords(coords, this.canvasRef)
-		const imageCoords = getTransformedImageCoords({
-			canvas: { width: CANVAS_WIDTH, height: CANVAS_HEIGHT },
-			image,
-			scale,
-			translate: { x: 0, y: 0 }
-		})
-		const normCoords = {
-			x: (relCoords.x - imageCoords.x) / scale,
-			y: (relCoords.y - imageCoords.y) / scale
-		}
-
-		this.prevCoords = normCoords
-		this.setState({ isPainting: true })
+	onMaskStart(event, touches) {
+		const imageCoords = this.getImageCoords()
+		const relCoords = this.getRelCoords(touches[0])
+		const maskCoords = this.getMaskCoords({ imageCoords, relCoords })
+		this.prevCoords = maskCoords
+		this.setState({ isMasking: true }, () => this.updateBrushPosition(relCoords))
 	}
 
-	onPaintMove(event, touches) {
+	onMaskMove(event, touches) {
 		event.preventDefault()
-		const { image } = this.props
-		const { erase, brushSize } = this.state
+		const { brushSize, scaleMultiplier, unmask } = this.state
 		const { x: x0, y: y0 } = this.prevCoords
-
-		const scale = this.state.scale * this.state.multiplier
-		const coords = touches[0]
-		const relCoords = getRelativeCoords(coords, this.canvasRef)
-		const imageCoords = getTransformedImageCoords({
-			canvas: { width: CANVAS_WIDTH, height: CANVAS_HEIGHT },
-			image,
-			scale,
-			translate: { x: 0, y: 0 }
-		})
-		const normCoords = {
-			x: (relCoords.x - imageCoords.x) / scale,
-			y: (relCoords.y - imageCoords.y) / scale
-		}
+		const imageCoords = this.getImageCoords()
+		const relCoords = this.getRelCoords(touches[0])
+		const maskCoords = this.getMaskCoords({ imageCoords, relCoords })
 
 		const ctx = this.maskCanvas.getContext('2d')
-
-		ctx.globalCompositeOperation = erase ? 'destination-out' : 'source-over'
-		ctx.strokeStyle = 'blue'
-		ctx.lineWidth = this.state.multiplier * brushSize
+		ctx.globalCompositeOperation = unmask ? 'destination-out' : 'source-over'
+		ctx.lineWidth = brushSize / scaleMultiplier
 		ctx.lineCap = 'round'
 		ctx.beginPath()
 		ctx.moveTo(x0, y0)
-		ctx.lineTo(normCoords.x, normCoords.y)
+		ctx.lineTo(maskCoords.x, maskCoords.y)
 		ctx.stroke()
 
-		this.prevCoords = normCoords
-
-		this.brushRef.style.left = `${relCoords.x}px`
-		this.brushRef.style.top = `${relCoords.y}px`
-
+		this.prevCoords = maskCoords
+		this.updateBrushPosition(relCoords)
 		this.paint()
 	}
 
-	paint() {
+	onMaskEnd() {
+		this.setState({ isMasking: false })
+	}
+
+	getScale() {
+		const { scale, scaleMultiplier } = this.state
+		return scale * scaleMultiplier
+	}
+
+	getRelCoords(coords) {
+		return getRelativeCoords(coords, this.canvasRef)
+	}
+
+	getImageCoords() {
 		const { image } = this.props
-		const { paintMasked } = this.state
+		return getTransformedImageCoords({
+			canvas: { width: CANVAS_WIDTH, height: CANVAS_HEIGHT },
+			image,
+			scale: this.getScale(),
+			translate: { x: 0, y: 0 }
+		})
+	}
+
+	getMaskCoords({ relCoords, imageCoords }) {
+		const scale = this.getScale()
+		return {
+			x: (relCoords.x - imageCoords.x) / scale,
+			y: (relCoords.y - imageCoords.y) / scale
+		}
+	}
+
+	updateBrushPosition({ x, y }) {
+		this.brushRef.style.left = `${x}px`
+		this.brushRef.style.top = `${y}px`
+	}
+
+	paint() {
+		const { showMasked } = this.state
+		const { x, y, width, height } = this.getImageCoords()
 		const ctx = this.canvasRef.getContext('2d')
 
 		// paint image
 		ctx.globalAlpha = 1
 		ctx.globalCompositeOperation = 'source-over'
-
-		const scale = this.state.scale * this.state.multiplier
-
-		const { x, y, width, height } = getTransformedImageCoords({
-			canvas: { width: CANVAS_WIDTH, height: CANVAS_HEIGHT },
-			image,
-			scale,
-			translate: { x: 0, y: 0 }
-		})
 		ctx.drawImage(this.imageCanvas, x, y, width, height)
 
+		// mask image
 		ctx.globalCompositeOperation = 'destination-out'
 		ctx.drawImage(this.maskCanvas, x, y, width, height)
 
-		// paint transparent image
-		if (paintMasked) {
+		// paint transparent image over masked image
+		if (showMasked) {
 			ctx.globalCompositeOperation = 'source-over'
 			ctx.globalAlpha = 0.5
 			ctx.drawImage(this.imageCanvas, x, y, width, height)
@@ -229,38 +316,48 @@ class EditView extends Component {
 		return (
 			<TopBar leftIcon={backIcon} rightIcon={doneButton}>
 				Edit
+				<BackgroundSwitcher
+					onChange={value => this.setState({ background: value })}
+				/>
 			</TopBar>
 		)
 	}
 
 	renderMaskTab() {
+		const { unmask, showMasked } = this.state
+		const lightWhite = 'rgba(255, 255, 255, 0.54)'
+
 		return (
 			<div style={this.styles.tab}>
 				<div style={this.styles.bar}>
-					<FlatButton
-						label="MASK"
-						onClick={() => this.setState({ erase: false })}
+					<IconButton
+						svg={brushSvg}
+						fill={unmask ? lightWhite : 'white'}
+						style={{ marginRight: 0 }}
+						onTap={() => this.setState({ unmask: false })}
 					/>
-					<FlatButton
-						label="UNMASK"
-						onClick={() => this.setState({ erase: true })}
+					<IconButton
+						svg={eraserSvg}
+						fill={unmask ? 'white' : lightWhite}
+						onTap={() => this.setState({ unmask: true })}
 					/>
-					<FlatButton
-						label="SHOW"
-						onClick={() =>
-							this.setState({ paintMasked: !this.state.paintMasked })
-						}
-					/>
-				</div>
-				<div style={this.styles.bar}>
+
 					<Slider
-						style={{ width: 150 }}
+						style={{ margin: '0 24px', flexGrow: 1 }}
 						sliderStyle={{ margin: 0 }}
-						min={5}
-						max={25}
+						min={20}
+						max={60}
 						step={1}
 						value={this.state.brushSize}
 						onChange={(event, value) => this.setState({ brushSize: value })}
+						onDragStart={() => this.setState({ showBrushPreview: true })}
+						onDragStop={() => this.setState({ showBrushPreview: false })}
+					/>
+
+					<IconButton
+						svg={showMasked ? visibilitySvg : visibilityOffSvg}
+						fill="white"
+						onTap={() => this.setState({ showMasked: !showMasked })}
 					/>
 				</div>
 			</div>
@@ -315,14 +412,13 @@ class EditView extends Component {
 	}
 
 	renderImage() {
-		const { image } = this.props
-		const { isPainting } = this.state
+		const { isMasking, showBrushPreview } = this.state
 
 		return (
 			<Taply
-				onTapStart={this.onPaintStart}
-				onTapMove={this.onPaintMove}
-				onTapEnd={this.onPaintEnd}
+				onTapStart={this.onMaskStart}
+				onTapMove={this.onMaskMove}
+				onTapEnd={this.onMaskEnd}
 			>
 				<div style={this.styles.image}>
 					<canvas
@@ -333,7 +429,7 @@ class EditView extends Component {
 						width={CANVAS_WIDTH}
 						height={CANVAS_HEIGHT}
 					/>
-					{isPainting && (
+					{isMasking && (
 						<div
 							style={this.styles.brush}
 							ref={ref => {
@@ -341,6 +437,7 @@ class EditView extends Component {
 							}}
 						/>
 					)}
+					{showBrushPreview && <div style={this.styles.brushPreview} />}
 				</div>
 			</Taply>
 		)
