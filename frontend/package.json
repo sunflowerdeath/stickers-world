@@ -17,6 +17,7 @@
     "animated": "^0.2.1",
     "babel-polyfill": "^6.26.0",
     "collisions": "^2.0.13",
+    "d3-contour": "^1.1.2",
     "floral": "0.0.4",
     "inline-style-prefixer": "^3.0.7",
     "lodash": "^4.17.4",

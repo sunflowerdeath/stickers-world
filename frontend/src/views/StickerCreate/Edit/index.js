@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import floral from 'floral'
 import Taply from 'taply'
+import { contours } from 'd3-contour'
 
 import Slider from 'material-ui/Slider'
 import FlatButton from 'material-ui/FlatButton'
@@ -17,6 +18,9 @@ import visibilityOffSvg from '!raw-loader!@@/icons/visibility-off.svg'
 import bindMethods from '@@/utils/bindMethods'
 import SvgIcon from '@@/components/SvgIcon'
 import TopBar from '@@/components/TopBar'
+
+import BackgroundSwitcher from './BackgroundSwitcher'
+import backgroundStyles from './BackgroundSwitcher/backgroundStyles'
 
 const iconButtonStyle = {
 	borderRadius: '50%',
@@ -42,55 +46,6 @@ const IconButton = ({ svg, onTap, fill, style }) => (
 	</Taply>
 )
 
-const BACKGROUNDS = {
-	black: 'black',
-	white: 'white',
-	chekers: '123',
-	photo: '123'
-}
-
-@floral
-class BackgroundSwitcher extends Component {
-	static propTypes = {
-		value: PropTypes.oneOf(['white', 'black', 'checkers', 'photo']).isRequired,
-		onChange: PropTypes.func.isRequried
-	}
-
-	static styles = () => ({
-		root: {
-			display: 'flex'
-		},
-		item: {
-			width: 24,
-			height: 24,
-			border: '2px solid #ccc',
-			borderRadius: 2,
-			boxSizing: 'border-box',
-			marginRight: 8
-		},
-		isSelected: {
-			border: '2px solid white'
-		}
-	})
-
-	render() {
-		const { value } = this.props
-		const items = Object.entries(BACKGROUNDS).map(([key, background]) => {
-			const style = {
-				...this.styles.item,
-				...(value === key && this.styles.isSelected),
-				background
-			}
-			return (
-				<Taply key={key} onTap={() => this.props.onChange(key)}>
-					<div style={style} />
-				</Taply>
-			)
-		})
-		return <div style={this.styles.root}>{items}</div>
-	}
-}
-
 const SCREEN_WIDTH = document.documentElement.clientWidth
 const SCREEN_HEIGHT = document.documentElement.clientHeight
 const TOP_BAR_HEIGHT = 64
@@ -110,6 +65,17 @@ const getRelativeCoords = ({ x, y }, elem) => {
 	return { x: x - left, y: y - top }
 }
 
+const drawPolygon = (ctx, points) => {
+	ctx.beginPath()
+	ctx.moveTo(points[0][0], points[0][1])
+	for (let i = 1; i < points.length; i += 1) {
+		const point = points[i]
+		ctx.lineTo(point[0], point[1])
+	}
+	ctx.closePath()
+	ctx.stroke()
+}
+
 @floral
 @bindMethods('onTapBack', 'onTapDone', 'onMaskStart', 'onMaskMove', 'onMaskEnd')
 class EditView extends Component {
@@ -120,7 +86,7 @@ class EditView extends Component {
 	}
 
 	static styles = (props, state) => {
-		const { brushSize, showBrushPreview } = state
+		const { brushSize, showBrushPreview, background } = state
 
 		const brush = {
 			position: 'absolute',
@@ -152,9 +118,7 @@ class EditView extends Component {
 			image: {
 				position: 'relative',
 				flexGrow: 1,
-				backgroundColor: 'white',
-				backgroundImage: `url(${bg})`,
-				backgroundSize: '30px 30px'
+				...backgroundStyles[background]
 			},
 			brush,
 			brushPreview,
@@ -287,6 +251,8 @@ class EditView extends Component {
 		const { x, y, width, height } = this.getImageCoords()
 		const ctx = this.canvasRef.getContext('2d')
 
+		ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
+
 		// paint image
 		ctx.globalAlpha = 1
 		ctx.globalCompositeOperation = 'source-over'
@@ -302,6 +268,42 @@ class EditView extends Component {
 			ctx.globalAlpha = 0.5
 			ctx.drawImage(this.imageCanvas, x, y, width, height)
 		}
+
+		this.drawOutline()
+	}
+
+	countoursGrid = new Uint8Array(CANVAS_WIDTH * CANVAS_HEIGHT)
+
+	getOutline() {
+		const ctx = this.canvasRef.getContext('2d')
+		const generator = contours()
+			.size([CANVAS_WIDTH, CANVAS_HEIGHT])
+			.smooth(true)
+			.thresholds([128])
+
+		const data = ctx.getImageData(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT).data
+
+		for (let x = 0; x < CANVAS_WIDTH; x += 1) {
+			for (let y = 0; y < CANVAS_HEIGHT; y += 1) {
+				const index = y * CANVAS_WIDTH + x
+				this.countoursGrid[index] = data[index * 4 + 3]
+			}
+		}
+
+		return generator(this.countoursGrid)
+	}
+
+	drawOutline() {
+		const outline = this.getOutline()
+
+		const ctx = this.canvasRef.getContext('2d')
+		ctx.globalCompositeOperation = 'source-over'
+		ctx.strokeStyle = 'red'
+		ctx.lineWidth = 2
+
+		outline[0].coordinates.forEach(hz => {
+			hz.forEach(points => drawPolygon(ctx, points))
+		})
 	}
 
 	renderTopBar() {
@@ -311,7 +313,17 @@ class EditView extends Component {
 			</Taply>
 		)
 
-		const doneButton = <FlatButton onClick={this.onTapDone}>Done</FlatButton>
+		const doneButton = (
+			<FlatButton
+				onClick={() => {
+					window.CONTOURS = this.paintOutlinePath()
+					console.log(window.CONTOURS)
+					// this.onTapDone
+				}}
+			>
+				Done
+			</FlatButton>
+		)
 
 		return (
 			<TopBar leftIcon={backIcon} rightIcon={doneButton}>
