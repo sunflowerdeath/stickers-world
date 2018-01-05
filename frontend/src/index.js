@@ -2,7 +2,7 @@ import Modernizr from 'modernizr'
 import React from 'react'
 import ReactDOM from 'react-dom'
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider'
-import {Provider} from 'mobx-react'
+import { Provider } from 'mobx-react'
 
 import api from './api/fakeApi'
 import StickersWorldStore from './stores/StickersWorldStore'
@@ -16,7 +16,7 @@ class ModernizrContextProvider extends React.Component {
 		modernizr: React.PropTypes.object
 	}
 	getChildContext() {
-		return {modernizr: this.props.features}
+		return { modernizr: this.props.features }
 	}
 	render() {
 		return this.props.children
@@ -27,7 +27,7 @@ Modernizr.on('webp', webp => {
 	const app = (
 		<Provider store={store}>
 			<MuiThemeProvider muiTheme={muiTheme}>
-				<ModernizrContextProvider features={{webp}}>
+				<ModernizrContextProvider features={{ webp }}>
 					<App />
 				</ModernizrContextProvider>
 			</MuiThemeProvider>

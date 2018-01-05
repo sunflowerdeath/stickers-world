@@ -18,6 +18,7 @@
     "babel-polyfill": "^6.26.0",
     "collisions": "^2.0.13",
     "d3-contour": "^1.1.2",
+    "d3-shape": "^1.2.0",
     "floral": "0.0.4",
     "inline-style-prefixer": "^3.0.7",
     "lodash": "^4.17.4",

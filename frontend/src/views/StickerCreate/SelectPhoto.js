@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { Component } from 'react'
 
 import TopBar from '@@/components/TopBar'
 import OverlayLayout from '@@/components/OverlayLayout'
@@ -9,12 +9,11 @@ import patrick from '!file-loader!@@/patrick.jpg'
 const TOP_BAR_HEIGHT = 50
 
 function getPhotoSize({ screenWidth, minPhotoSize, margin }) {
-	const count = Math.floor((screenWidth - margin) / (minPhotoSize + margin))
-	console.log(count)
-	return (screenWidth - margin * (count + 1)) / count
+	const photosInRow = Math.floor((screenWidth - margin) / (minPhotoSize + margin))
+	return (screenWidth - margin * (photosInRow + 1)) / photosInRow
 }
 
-export default class SelectView extends React.Component {
+export default class SelectView extends Component {
 	constructor() {
 		super()
 		this.photoSize = getPhotoSize({
@@ -58,7 +57,7 @@ export default class SelectView extends React.Component {
 	}
 }
 
-class Photo extends React.Component {
+class Photo extends Component {
 	render() {
 		const styles = {
 			root: {

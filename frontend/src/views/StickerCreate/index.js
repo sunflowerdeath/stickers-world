@@ -1,9 +1,11 @@
 import React, { Component } from 'react'
+import { withRouter } from 'react-router'
 import IconButton from 'material-ui/IconButton'
 import TextField from 'material-ui/TextField'
 import FlatButton from 'material-ui/FlatButton'
 import ArrowBackIcon from 'material-ui/svg-icons/navigation/arrow-back'
 
+import loadImage from '@@/utils/loadImage'
 import TopBar from '@@/components/TopBar'
 
 import SelectPhotoView from './SelectPhoto'
@@ -11,39 +13,61 @@ import AdjustView from './Adjust'
 import EditView from './Edit'
 
 import patrick from '!file-loader!@@/patrick.jpg'
-const WIDTH = 249
-const HEIGHT = 320
 
+@withRouter
 export default class CreateStickerView extends Component {
-	state = {
-		step: 'select'
+	constructor(props) {
+		super(props)
+
+		const imageUrl = props.location.state.imageUrl
+
+		if (imageUrl) {
+			this.state = {
+				step: 'adjust',
+				imageUrl,
+				selectStepIsSkipped: true
+			}
+			this.loadImage(imageUrl)
+		} else {
+			this.state = { step: 'select' }
+		}
 	}
 
-	onSelectPhoto(photo) {
-		this.setState({ step: 'adjust', photo })
+	onSelectPhoto(imageUrl) {
+		this.setState({ step: 'adjust', imageUrl })
+	}
+
+	loadImage(url) {
+		loadImage(url).then(image => this.setState({ image }))
 	}
 
 	render() {
-		const { step } = this.state
+		const { step, selectStepIsSkipped, image, croppedImage } = this.state
 
 		if (step === 'select') {
 			return <SelectPhotoView onSelect={this.onSelectPhoto.bind(this)} />
 		} else if (step === 'adjust') {
+			if (!image) return <div>Loading...</div>
+
 			return (
 				<AdjustView
-					image={{ width: WIDTH, height: HEIGHT, src: patrick }}
+					image={image}
 					onGoBack={() => {
-						this.setState({ step: 'select' })
+						if (selectStepIsSkipped) {
+							this.props.history.push('/')
+						} else {
+							this.setState({ step: 'select' })
+						}
 					}}
-					onGoNext={({ image }) => {
-						this.setState({ step: 'edit', image })
+					onGoNext={croppedImage => {
+						this.setState({ step: 'edit', croppedImage })
 					}}
 				/>
 			)
 		} else if (step === 'edit') {
 			return (
 				<EditView
-					image={this.state.image}
+					image={croppedImage}
 					onGoBack={() => {
 						this.setState({ step: 'adjust' })
 					}}

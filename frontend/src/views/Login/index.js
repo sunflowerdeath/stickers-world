@@ -1,6 +1,7 @@
 import React from 'react'
 import { withRouter } from 'react-router'
 import floral from 'floral'
+import Taply from 'taply'
 
 import matchMediaDecorator from '@@/utils/matchMedia/decorator'
 import Tappable from '@@/components/Tappable'
@@ -22,100 +23,126 @@ const SYMBOLS = {
 	sp: ' '
 }
 
+const PLATFORM = 'web'
+
+const getStyles = (props, state, context) => {
+	const smallHeight = props.matches.smallHeight
+	const supportWebp = context.modernizr.webp
+
+	const margin = smallHeight ? 32 : 64
+	const stickers = {
+		moneyface: {
+			position: 'fixed',
+			top: 0,
+			left: 0,
+			width: `${24 * 436 / 512}vh`,
+			height: '24vh',
+			backgroundImage: `url(${supportWebp ? moneyfaceWebp : moneyfacePng})`,
+			backgroundSize: 'cover',
+			transform: 'rotate(16deg) translateX(-40%) translateY(20%)'
+		},
+		gnomekid: {
+			position: 'fixed',
+			bottom: 0,
+			left: 0,
+			width: `${33 * 397 / 512}vh`,
+			height: '33vh',
+			backgroundImage: `url(${supportWebp ? gnomekidWebp : gnomekidPng})`,
+			backgroundSize: 'cover',
+			transform: 'rotate(-5deg) translateX(-20%) translateY(10%)'
+		},
+		pepa: {
+			position: 'fixed',
+			top: '23%',
+			right: 0,
+			width: '24vh',
+			height: '24vh',
+			backgroundImage: `url(${supportWebp ? pepaWebp : pepaPng})`,
+			backgroundSize: 'cover',
+			transform: 'rotate(-20deg) translateX(25%)'
+		},
+		pepe: {
+			position: 'fixed',
+			bottom: 0,
+			right: 0,
+			width: '24vh',
+			height: '24vh',
+			backgroundImage: `url(${supportWebp ? pepeWebp : pepePng})`,
+			backgroundSize: 'cover',
+			transform: 'scaleX(-1) rotate(-7deg) translateX(-20%) translateY(5%)'
+		}
+	}
+
+	return {
+		content: {
+			color: 'white',
+			position: 'absolute',
+			top: '10%',
+			left: '50%',
+			transform: 'translateX(-50%)'
+		},
+		logo: {
+			marginBottom: margin
+		},
+		block: {
+			width: 250,
+			textAlign: 'center',
+			margin: 'auto',
+			marginBottom: margin
+		},
+		button: {
+			textTransform: 'uppercase',
+			marginBottom: 8,
+			fontWeight: '500'
+		},
+		fileInput: {
+			display: 'none'
+		},
+		caption: {
+			fontSize: 14,
+			color: 'rgba(255,255,255,0.5)'
+		},
+		telegramLogo: {
+			width: 50,
+			height: 50,
+			backgroundImage: `url(${telegramPng})`,
+			backgroundSize: 'cover',
+			margin: 'auto',
+			marginBottom: 16
+		},
+		...stickers
+	}
+}
+
 @withRouter
 @matchMediaDecorator({ smallHeight: '(max-height: 700px)' })
 @floral
 export default class LoginView extends React.Component {
-	static displayName = 'LoginView'
+	static styles = getStyles
 
 	static contextTypes = {
 		modernizr: React.PropTypes.object
 	}
 
-	static styles = (props, state, context) => {
-		const smallHeight = props.matches.smallHeight
-		const supportWebp = context.modernizr.webp
+	constructor() {
+		super()
+		this.onTapCreate = this.onTapCreate.bind(this)
+		this.onSelectFile = this.onSelectFile.bind(this)
+	}
 
-		const margin = smallHeight ? 32 : 64
-		const stickers = {
-			moneyface: {
-				position: 'fixed',
-				top: 0,
-				left: 0,
-				width: `${24 * 436 / 512}vh`,
-				height: '24vh',
-				backgroundImage: `url(${supportWebp ? moneyfaceWebp : moneyfacePng})`,
-				backgroundSize: 'cover',
-				transform: 'rotate(16deg) translateX(-40%) translateY(20%)'
-			},
-			gnomekid: {
-				position: 'fixed',
-				bottom: 0,
-				left: 0,
-				width: `${33 * 397 / 512}vh`,
-				height: '33vh',
-				backgroundImage: `url(${supportWebp ? gnomekidWebp : gnomekidPng})`,
-				backgroundSize: 'cover',
-				transform: 'rotate(-5deg) translateX(-20%) translateY(10%)'
-			},
-			pepa: {
-				position: 'fixed',
-				top: '23%',
-				right: 0,
-				width: '24vh',
-				height: '24vh',
-				backgroundImage: `url(${supportWebp ? pepaWebp : pepaPng})`,
-				backgroundSize: 'cover',
-				transform: 'rotate(-20deg) translateX(25%)'
-			},
-			pepe: {
-				position: 'fixed',
-				bottom: 0,
-				right: 0,
-				width: '24vh',
-				height: '24vh',
-				backgroundImage: `url(${supportWebp ? pepeWebp : pepePng})`,
-				backgroundSize: 'cover',
-				transform: 'scaleX(-1) rotate(-7deg) translateX(-20%) translateY(5%)'
-			}
+	onTapCreate() {
+		if (PLATFORM === 'web') {
+			this.fileInputRef.click()
+			return
 		}
 
-		return {
-			content: {
-				color: 'white',
-				position: 'absolute',
-				top: '10%',
-				left: '50%',
-				transform: 'translateX(-50%)'
-			},
-			logo: {
-				marginBottom: margin
-			},
-			block: {
-				width: 250,
-				textAlign: 'center',
-				margin: 'auto',
-				marginBottom: margin
-			},
-			button: {
-				textTransform: 'uppercase',
-				marginBottom: 8,
-				fontWeight: '500'
-			},
-			caption: {
-				fontSize: 14,
-				color: 'rgba(255,255,255,0.5)'
-			},
-			telegramLogo: {
-				width: 50,
-				height: 50,
-				backgroundImage: `url(${telegramPng})`,
-				backgroundSize: 'cover',
-				margin: 'auto',
-				marginBottom: 16
-			},
-			...stickers
-		}
+		this.props.history.push('/create')
+	}
+
+	onSelectFile() {
+		const [file] = this.fileInputRef.files
+		const imageUrl = URL.createObjectURL(file)
+		this.props.history.push('/create', { imageUrl })
 	}
 
 	renderBlocks() {
@@ -139,19 +166,25 @@ export default class LoginView extends React.Component {
 						Telegram.
 					</div>
 				</div>
-				<div style={this.styles.block}>
-					<Tappable
-						style={{ cursor: 'pointer' }}
-						onTap={() => this.props.history.push('/create')}
-					>
+				<Taply onTap={this.onTapCreate}>
+					<div style={this.styles.block}>
 						<div style={this.styles.button}>Create sticker</div>
-					</Tappable>
-					<div style={this.styles.caption}>
-						Create sticker without authorization
-						<br />
-						and save png file to device.
+						<div style={this.styles.caption}>
+							Create sticker without authorization
+							<br />
+							and save png file to device.
+						</div>
 					</div>
-				</div>
+				</Taply>
+				<input
+					type="file"
+					accept="image/*"
+					style={this.styles.fileInput}
+					ref={ref => {
+						this.fileInputRef = ref
+					}}
+					onChange={this.onSelectFile}
+				/>
 			</div>
 		)
 	}

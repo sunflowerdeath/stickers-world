@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import floral from 'floral'
 import Taply from 'taply'
 import { contours } from 'd3-contour'
+import flatten from 'lodash/flatten'
 
 import Slider from 'material-ui/Slider'
 import FlatButton from 'material-ui/FlatButton'
@@ -15,57 +16,67 @@ import eraserSvg from '!raw-loader!@@/icons/eraser.svg'
 import visibilitySvg from '!raw-loader!@@/icons/visibility.svg'
 import visibilityOffSvg from '!raw-loader!@@/icons/visibility-off.svg'
 
+import simplify from '@@/utils/simplify'
 import bindMethods from '@@/utils/bindMethods'
-import SvgIcon from '@@/components/SvgIcon'
-import TopBar from '@@/components/TopBar'
+import { Toolbar, ToolbarGroup, ToolbarCaption } from '@@/components/Toolbar'
+import IconButton from '@@/components/IconButton'
 
 import BackgroundSwitcher from './BackgroundSwitcher'
 import backgroundStyles from './BackgroundSwitcher/backgroundStyles'
 
-const iconButtonStyle = {
-	borderRadius: '50%',
-	width: 24,
-	height: 24,
-	padding: 12,
-	flexShrink: 0,
-	outline: 'none',
-	transition: 'background 0.25s',
-	marginLeft: -12,
-	marginRight: -12
+const CANVAS_HEIGHT = document.documentElement.clientHeight
+const CANVAS_WIDTH = document.documentElement.clientWidth
+const TOP_BAR_HEIGHT = 48
+const BOTTOM_BAR_HEIGHTS = {
+	mask: 48 * 2,
+	effects: 48 * 3
 }
-const IconButton = ({ svg, onTap, fill, style }) => (
-	<Taply onTap={onTap}>
-		<SvgIcon
-			svg={svg}
-			style={{
-				...iconButtonStyle,
-				fill,
-				...style
-			}}
-		/>
-	</Taply>
-)
+const CANVAS_PADDING = 24
 
-const SCREEN_WIDTH = document.documentElement.clientWidth
-const SCREEN_HEIGHT = document.documentElement.clientHeight
-const TOP_BAR_HEIGHT = 64
-const BOTTOM_BAR_HEIGHT = 48 * 2
-const CANVAS_HEIGHT = SCREEN_HEIGHT - TOP_BAR_HEIGHT - BOTTOM_BAR_HEIGHT
-const CANVAS_WIDTH = SCREEN_WIDTH
-
-const getTransformedImageCoords = ({ canvas, image, scale, translate }) => ({
-	x: canvas.width / 2 - scale * image.width / 2,
-	y: canvas.height / 2 - scale * image.height / 2,
-	width: image.width * scale,
-	height: image.height * scale
-})
-
+/*
 const getRelativeCoords = ({ x, y }, elem) => {
 	const { left, top } = elem.getBoundingClientRect()
 	return { x: x - left, y: y - top }
 }
+*/
 
-const drawPolygon = (ctx, points) => {
+const centerImage = ({ image, canvas, selectedTab }) => {
+	const availableHeight =
+		canvas.height - TOP_BAR_HEIGHT - BOTTOM_BAR_HEIGHTS[selectedTab]
+	const scale = Math.min(
+		availableHeight / (image.height + CANVAS_PADDING),
+		canvas.width / (image.width + CANVAS_PADDING)
+	)
+	return {
+		scale,
+		translateX: canvas.width / 2 - image.width / 2 * scale,
+		translateY: TOP_BAR_HEIGHT + availableHeight / 2 - image.height / 2 * scale
+	}
+}
+
+const getCoordsOnImage = ({ x, y }, { translateX, translateY, scale }) => ({
+	x: (x - translateX) / scale,
+	y: (y - translateY) / scale
+})
+
+const getOutlines = imageData => {
+	const { width, height, data } = imageData
+	const generator = contours()
+		.size([width, height])
+		.smooth(true)
+		.thresholds([128])
+	const grid = new Uint8Array(width * height)
+	for (let x = 0; x < width; x += 1) {
+		for (let y = 0; y < height; y += 1) {
+			const index = y * width + x
+			grid[index] = data[index * 4 + 3]
+		}
+	}
+	const outlines = flatten(generator(grid)[0].coordinates)
+	return outlines.map(points => simplify(points, 1))
+}
+
+const drawOutline = (ctx, points) => {
 	ctx.beginPath()
 	ctx.moveTo(points[0][0], points[0][1])
 	for (let i = 1; i < points.length; i += 1) {
@@ -76,63 +87,110 @@ const drawPolygon = (ctx, points) => {
 	ctx.stroke()
 }
 
+const distanceBetweenPoints = (a, b) => Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2)
+
+const centerBetweenPoints = (a, b) => ({
+	x: a.x + (b.x - a.x) / 2,
+	y: a.y + (b.y - a.y) / 2
+})
+
+const getStyles = (props, state) => {
+	const { brushSize, showBrushPreview, background, transform, scaleMultiplier } = state
+
+	const scaledBrushSize = brushSize * transform.scale / scaleMultiplier
+	const brush = {
+		position: 'absolute',
+		width: scaledBrushSize,
+		height: scaledBrushSize,
+		boxSizing: 'border-box',
+		transform: 'translateY(-50%) translateX(-50%)',
+		borderRadius: '50%',
+		border: '2px solid white',
+		filter: 'drop-shadow(1px 1px 2px black)'
+	}
+
+	const brushPreview = showBrushPreview && {
+		...brush,
+		border: '2px dashed white',
+		top: -48,
+		left: '50%'
+	}
+
+	return {
+		root: {
+			position: 'relative',
+			height: '100%'
+		},
+		icon: {
+			fill: 'white'
+		},
+		topBar: {
+			background: 'black',
+			zIndex: 1,
+			position: 'absolute',
+			width: '100%',
+			top: 0,
+			left: 0
+		},
+		bottomBar: {
+			background: 'black',
+			position: 'absolute',
+			width: '100%',
+			bottom: 0,
+			left: 0
+		},
+		image: {
+			position: 'absolute',
+			width: '100%',
+			height: CANVAS_HEIGHT,
+			left: 0,
+			top: 0,
+			flexGrow: 1,
+			...backgroundStyles[background]
+		},
+		brush,
+		brushPreview,
+		tab: {
+			color: 'white'
+		},
+		bar: {
+			color: 'white',
+			display: 'flex',
+			padding: '0 24px',
+			height: 48,
+			alignItems: 'center'
+		},
+		slider: {
+			flexGrow: 1,
+			marginRight: 24
+		},
+		caption: {
+			fontWeight: 'bold',
+			textTransform: 'uppercase',
+			marginRight: 24
+		}
+	}
+}
+
 @floral
-@bindMethods('onTapBack', 'onTapDone', 'onMaskStart', 'onMaskMove', 'onMaskEnd')
-class EditView extends Component {
+@bindMethods(
+	'onTapBack',
+	'onTapDone',
+	'onMaskStart',
+	'onMaskMove',
+	'onMaskEnd',
+	'onPinchStart',
+	'onPinchMove',
+	'onChangeTab'
+)
+export default class EditView extends Component {
 	static propTypes = {
 		image: PropTypes.instanceOf(ImageData).isRequired,
 		onGoBack: PropTypes.func.isRequired,
 		onGoNext: PropTypes.func.isRequired
 	}
 
-	static styles = (props, state) => {
-		const { brushSize, showBrushPreview, background } = state
-
-		const brush = {
-			position: 'absolute',
-			width: brushSize,
-			height: brushSize,
-			boxSizing: 'border-box',
-			transform: 'translateY(-50%) translateX(-50%)',
-			borderRadius: '50%',
-			border: '2px solid white',
-			filter: 'drop-shadow(1px 1px 2px black)'
-		}
-
-		const brushPreview = showBrushPreview && {
-			...brush,
-			border: '2px dashed white',
-			top: 'calc(100% - 32px)',
-			left: '50%'
-		}
-
-		return {
-			root: {
-				display: 'flex',
-				flexDirection: 'column',
-				height: '100%'
-			},
-			icon: {
-				fill: 'white'
-			},
-			image: {
-				position: 'relative',
-				flexGrow: 1,
-				...backgroundStyles[background]
-			},
-			brush,
-			brushPreview,
-			tab: {
-				color: 'white'
-			},
-			bar: {
-				display: 'flex',
-				padding: '0 24px',
-				height: 48,
-				alignItems: 'center'
-			}
-		}
-	}
+	static styles = getStyles
 
 	constructor(props) {
 		super()
@@ -149,27 +207,31 @@ class EditView extends Component {
 		const ctx = this.imageCanvas.getContext('2d')
 		ctx.putImageData(image, 0, 0)
 
-		const scaleMultiplier = Math.min(
-			(SCREEN_HEIGHT - TOP_BAR_HEIGHT - BOTTOM_BAR_HEIGHT) / (image.height + 20),
-			SCREEN_WIDTH / (image.width + 20)
-		)
+		const transform = centerImage({
+			selectedTab: 'mask',
+			canvas: { width: CANVAS_WIDTH, height: CANVAS_HEIGHT },
+			image
+		})
 
 		this.state = {
 			selectedTab: 'mask',
 			background: 'chekers',
-			paintMasked: false,
+			drawMasked: false,
 			brushSize: 30,
-			scale: 1,
-			scaleMultiplier
+			outlineWidth: 4,
+			outlineColor: 'white',
+			shadowSize: 5,
+			transform,
+			scaleMultiplier: transform.scale
 		}
 	}
 
 	componentDidMount() {
-		this.paint()
+		this.draw()
 	}
 
-	componentDidUpdate(prevProps, prevState) {
-		if (prevState.showMasked !== this.state.showMasked) this.paint()
+	componentDidUpdate() {
+		this.draw()
 	}
 
 	onTapBack() {
@@ -181,64 +243,77 @@ class EditView extends Component {
 	}
 
 	onMaskStart(event, touches) {
-		const imageCoords = this.getImageCoords()
-		const relCoords = this.getRelCoords(touches[0])
-		const maskCoords = this.getMaskCoords({ imageCoords, relCoords })
-		this.prevCoords = maskCoords
-		this.setState({ isMasking: true }, () => this.updateBrushPosition(relCoords))
+		const touch = touches[0]
+		const { transform } = this.state
+
+		this.prevCoords = getCoordsOnImage(touch, transform)
+		this.setState({ isMasking: true }, () => this.updateBrushPosition(touch))
 	}
 
 	onMaskMove(event, touches) {
 		event.preventDefault()
-		const { brushSize, scaleMultiplier, unmask } = this.state
-		const { x: x0, y: y0 } = this.prevCoords
-		const imageCoords = this.getImageCoords()
-		const relCoords = this.getRelCoords(touches[0])
-		const maskCoords = this.getMaskCoords({ imageCoords, relCoords })
+
+		const touch = touches[0]
+		const { brushSize, unmask, scaleMultiplier, transform } = this.state
+		const coords = getCoordsOnImage(touch, transform)
 
 		const ctx = this.maskCanvas.getContext('2d')
 		ctx.globalCompositeOperation = unmask ? 'destination-out' : 'source-over'
 		ctx.lineWidth = brushSize / scaleMultiplier
 		ctx.lineCap = 'round'
 		ctx.beginPath()
-		ctx.moveTo(x0, y0)
-		ctx.lineTo(maskCoords.x, maskCoords.y)
+		ctx.moveTo(this.prevCoords.x, this.prevCoords.y)
+		ctx.lineTo(coords.x, coords.y)
 		ctx.stroke()
 
-		this.prevCoords = maskCoords
-		this.updateBrushPosition(relCoords)
-		this.paint()
+		this.prevCoords = coords
+		this.updateBrushPosition(touch)
+		this.draw()
 	}
 
 	onMaskEnd() {
 		this.setState({ isMasking: false })
 	}
 
-	getScale() {
-		const { scale, scaleMultiplier } = this.state
-		return scale * scaleMultiplier
+	onPinchStart(event, touches) {
+		const [t1, t2] = touches
+		const { transform } = this.state
+
+		this.initialTransform = transform
+		this.initialDistance = distanceBetweenPoints(t1, t2)
+		this.initialCenterOnImage = getCoordsOnImage(
+			centerBetweenPoints(t1, t2),
+			transform
+		)
 	}
 
-	getRelCoords(coords) {
-		return getRelativeCoords(coords, this.canvasRef)
-	}
+	onPinchMove(event, touches) {
+		const [t1, t2] = touches
+		const { initialTransform, initialDistance, initialCenterOnImage } = this
 
-	getImageCoords() {
-		const { image } = this.props
-		return getTransformedImageCoords({
-			canvas: { width: CANVAS_WIDTH, height: CANVAS_HEIGHT },
-			image,
-			scale: this.getScale(),
-			translate: { x: 0, y: 0 }
+		event.preventDefault()
+
+		const currentDistance = distanceBetweenPoints(t1, t2)
+		const scale = initialTransform.scale * currentDistance / initialDistance
+		const currentCenter = centerBetweenPoints(t1, t2)
+		this.setState({
+			transform: {
+				scale,
+				translateX: currentCenter.x - initialCenterOnImage.x * scale,
+				translateY: currentCenter.y - initialCenterOnImage.y * scale
+			}
 		})
 	}
 
-	getMaskCoords({ relCoords, imageCoords }) {
-		const scale = this.getScale()
-		return {
-			x: (relCoords.x - imageCoords.x) / scale,
-			y: (relCoords.y - imageCoords.y) / scale
-		}
+	onChangeTab(tab) {
+		this.setState({
+			selectedTab: tab,
+			transform: centerImage({
+				selectedTab: tab,
+				canvas: { width: CANVAS_WIDTH, height: CANVAS_HEIGHT },
+				image: this.props.image
+			})
+		})
 	}
 
 	updateBrushPosition({ x, y }) {
@@ -246,166 +321,204 @@ class EditView extends Component {
 		this.brushRef.style.top = `${y}px`
 	}
 
-	paint() {
-		const { showMasked } = this.state
-		const { x, y, width, height } = this.getImageCoords()
+	draw() {
+		const { selectedTab } = this.state
+
 		const ctx = this.canvasRef.getContext('2d')
-
 		ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
+		this.drawImage(ctx)
+		if (selectedTab === 'effects') this.drawEffects(ctx)
+	}
 
-		// paint image
+	drawImage(ctx) {
+		const { image } = this.props
+		const { selectedTab, showMasked, transform } = this.state
+		const { translateX, translateY, scale } = transform
+
+		const width = image.width * scale
+		const height = image.height * scale
+
+		// draw image
 		ctx.globalAlpha = 1
 		ctx.globalCompositeOperation = 'source-over'
-		ctx.drawImage(this.imageCanvas, x, y, width, height)
+		ctx.drawImage(this.imageCanvas, translateX, translateY, width, height)
 
 		// mask image
 		ctx.globalCompositeOperation = 'destination-out'
-		ctx.drawImage(this.maskCanvas, x, y, width, height)
+		ctx.drawImage(this.maskCanvas, translateX, translateY, width, height)
 
-		// paint transparent image over masked image
-		if (showMasked) {
+		// draw transparent image over masked image
+		if (selectedTab === 'mask' && showMasked) {
 			ctx.globalCompositeOperation = 'source-over'
 			ctx.globalAlpha = 0.5
-			ctx.drawImage(this.imageCanvas, x, y, width, height)
+			ctx.drawImage(this.imageCanvas, translateX, translateY, width, height)
 		}
-
-		this.drawOutline()
 	}
 
-	countoursGrid = new Uint8Array(CANVAS_WIDTH * CANVAS_HEIGHT)
+	drawEffects(ctx) {
+		const { outlineWidth, shadowSize } = this.state
 
-	getOutline() {
-		const ctx = this.canvasRef.getContext('2d')
-		const generator = contours()
-			.size([CANVAS_WIDTH, CANVAS_HEIGHT])
-			.smooth(true)
-			.thresholds([128])
-
-		const data = ctx.getImageData(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT).data
-
-		for (let x = 0; x < CANVAS_WIDTH; x += 1) {
-			for (let y = 0; y < CANVAS_HEIGHT; y += 1) {
-				const index = y * CANVAS_WIDTH + x
-				this.countoursGrid[index] = data[index * 4 + 3]
-			}
-		}
-
-		return generator(this.countoursGrid)
+		if (outlineWidth > 0) this.drawOutline(ctx)
+		if (shadowSize > 3) this.drawShadow(ctx)
 	}
 
-	drawOutline() {
-		const outline = this.getOutline()
+	drawOutline(ctx) {
+		const { outlineColor, outlineWidth } = this.state
 
-		const ctx = this.canvasRef.getContext('2d')
+		const outlines = getOutlines(ctx.getImageData(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT))
+		ctx.strokeStyle = outlineColor
+
+		// 1px inner outline
 		ctx.globalCompositeOperation = 'source-over'
-		ctx.strokeStyle = 'red'
 		ctx.lineWidth = 2
+		outlines.forEach(points => drawOutline(ctx, points))
 
-		outline[0].coordinates.forEach(hz => {
-			hz.forEach(points => drawPolygon(ctx, points))
-		})
+		// outer outline
+		if (outlineWidth > 1) {
+			ctx.globalCompositeOperation = 'destination-over'
+			ctx.lineWidth = outlineWidth * 2
+			outlines.forEach(points => drawOutline(ctx, points))
+		}
+	}
+
+	drawShadow(ctx) {
+		const { shadowColor, shadowSize } = this.state
+
+		ctx.globalCompositeOperation = 'destination-over'
+		ctx.shadowColor = 'rgba(0,0,0,0.6)'
+		ctx.shadowOffsetY = 1
+		ctx.shadowOffsetX = 1
+		ctx.shadowBlur = shadowSize
+		ctx.drawImage(this.canvasRef, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
+		ctx.shadowColor = 'transparent'
 	}
 
 	renderTopBar() {
 		const backIcon = (
-			<Taply onTap={this.onTapBack}>
-				<SvgIcon svg={chevronLeftSvg} style={this.styles.icon} />
-			</Taply>
+			<IconButton
+				svg={chevronLeftSvg}
+				fill="white"
+				size="big"
+				onTap={this.onTapBack}
+			/>
 		)
 
-		const doneButton = (
-			<FlatButton
-				onClick={() => {
-					window.CONTOURS = this.paintOutlinePath()
-					console.log(window.CONTOURS)
-					// this.onTapDone
-				}}
-			>
-				Done
-			</FlatButton>
-		)
+		const doneButton = <FlatButton onClick={this.onTapDone}>Done</FlatButton>
 
 		return (
-			<TopBar leftIcon={backIcon} rightIcon={doneButton}>
-				Edit
-				<BackgroundSwitcher
-					onChange={value => this.setState({ background: value })}
-				/>
-			</TopBar>
+			<div style={this.styles.topBar}>
+				<Toolbar style={{ paddingLeft: 0 }}>
+					{backIcon}
+					<div
+						style={{
+							fontWeight: 500,
+							fontSize: 18,
+							marginRight: 24
+						}}
+					>
+						Edit
+					</div>
+					<BackgroundSwitcher
+						onChange={value => this.setState({ background: value })}
+					/>
+					{doneButton}
+				</Toolbar>
+			</div>
 		)
 	}
 
 	renderMaskTab() {
-		const { unmask, showMasked } = this.state
+		const { unmask, showMasked, showBrushPreview } = this.state
 		const lightWhite = 'rgba(255, 255, 255, 0.54)'
 
 		return (
-			<div style={this.styles.tab}>
-				<div style={this.styles.bar}>
-					<IconButton
-						svg={brushSvg}
-						fill={unmask ? lightWhite : 'white'}
-						style={{ marginRight: 0 }}
-						onTap={() => this.setState({ unmask: false })}
-					/>
-					<IconButton
-						svg={eraserSvg}
-						fill={unmask ? 'white' : lightWhite}
-						onTap={() => this.setState({ unmask: true })}
-					/>
-
+			<div style={this.styles.tab} key="mask">
+				{showBrushPreview && <div style={this.styles.brushPreview} />}
+				<Toolbar>
+					<ToolbarGroup>
+						<IconButton
+							svg={brushSvg}
+							fill={unmask ? lightWhite : 'white'}
+							style={{ marginRight: 0 }}
+							onTap={() => this.setState({ unmask: false })}
+						/>
+						<IconButton
+							svg={eraserSvg}
+							fill={unmask ? 'white' : lightWhite}
+							onTap={() => this.setState({ unmask: true })}
+						/>
+					</ToolbarGroup>
 					<Slider
-						style={{ margin: '0 24px', flexGrow: 1 }}
+						style={this.styles.slider}
 						sliderStyle={{ margin: 0 }}
 						min={20}
-						max={60}
+						max={50}
 						step={1}
 						value={this.state.brushSize}
 						onChange={(event, value) => this.setState({ brushSize: value })}
 						onDragStart={() => this.setState({ showBrushPreview: true })}
 						onDragStop={() => this.setState({ showBrushPreview: false })}
 					/>
-
 					<IconButton
 						svg={showMasked ? visibilitySvg : visibilityOffSvg}
 						fill="white"
 						onTap={() => this.setState({ showMasked: !showMasked })}
 					/>
-				</div>
+				</Toolbar>
 			</div>
 		)
 	}
 
 	renderEffectsTab() {
+		const { outlineWidth, shadowSize } = this.state
+
 		return (
-			<div style={this.styles.tab}>
-				<div style={this.styles.bar}>
-					<b>BORDER</b>
-					<Slider style={{ width: 150 }} sliderStyle={{ margin: 0 }} />
-				</div>
-				<div style={this.styles.bar}>
-					<b>SHADOW</b>
-					<Slider style={{ width: 150 }} sliderStyle={{ margin: 0 }} />
-				</div>
+			<div style={this.styles.tab} key="effects">
+				<Toolbar>
+					<ToolbarCaption style={{ width: 75 }}>Border</ToolbarCaption>
+					<Slider
+						style={this.styles.slider}
+						sliderStyle={{ margin: 0 }}
+						min={0}
+						max={8}
+						step={1}
+						value={outlineWidth}
+						onChange={(event, value) =>
+							this.setState({ outlineWidth: value })
+						}
+					/>
+				</Toolbar>
+				<Toolbar>
+					<ToolbarCaption style={{ width: 75 }}>Shadow</ToolbarCaption>
+					<Slider
+						style={this.styles.slider}
+						sliderStyle={{ margin: 0 }}
+						min={3}
+						max={10}
+						step={1}
+						value={shadowSize}
+						onChange={(event, value) => this.setState({ shadowSize: value })}
+					/>
+					<IconButton svg={visibilitySvg} fill="white" />
+				</Toolbar>
 			</div>
 		)
 	}
 
+	/*
 	renderTextTab() {
 		return <div style={this.styles.tab}>TEXT</div>
 	}
+	*/
 
 	renderBottomBar() {
 		const { selectedTab } = this.state
 
 		const tabs = (
-			<Tabs
-				value={this.state.selectedTab}
-				onChange={tab => this.setState({ selectedTab: tab })}
-			>
+			<Tabs value={this.state.selectedTab} onChange={this.onChangeTab}>
 				<Tab value="mask" label="Mask" />
 				<Tab value="effects" label="Effects" />
-				<Tab value="text" label="Text" />
+				{/* <Tab value="text" label="Text" /> */}
 			</Tabs>
 		)
 
@@ -423,16 +536,20 @@ class EditView extends Component {
 		)
 	}
 
-	renderImage() {
-		const { isMasking, showBrushPreview } = this.state
+	renderCanvas() {
+		const { isMasking, selectedTab } = this.state
 
 		return (
 			<Taply
+				isDisabled={selectedTab !== 'mask'}
+				isPinchable
 				onTapStart={this.onMaskStart}
 				onTapMove={this.onMaskMove}
 				onTapEnd={this.onMaskEnd}
+				onPinchStart={this.onPinchStart}
+				onPinchMove={this.onPinchMove}
 			>
-				<div style={this.styles.image}>
+				<div style={{ ...this.styles.image, height: CANVAS_HEIGHT }}>
 					<canvas
 						style={this.styles.canvas}
 						ref={ref => {
@@ -449,7 +566,6 @@ class EditView extends Component {
 							}}
 						/>
 					)}
-					{showBrushPreview && <div style={this.styles.brushPreview} />}
 				</div>
 			</Taply>
 		)
@@ -459,11 +575,9 @@ class EditView extends Component {
 		return (
 			<div style={this.styles.root}>
 				{this.renderTopBar()}
-				{this.renderImage()}
+				{this.renderCanvas()}
 				{this.renderBottomBar()}
 			</div>
 		)
 	}
 }
-
-export default EditView
