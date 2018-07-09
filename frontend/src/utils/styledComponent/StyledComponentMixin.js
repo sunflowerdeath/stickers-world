@@ -90,11 +90,13 @@ let StyledComponentMixin = {
 }
 
 // Use as `static contextTypes = StylesMixin.contextTypes`
+/*
 Object.defineProperty(StyledComponentMixin, 'contextTypes', {
 	value: {
 		styledComponentUserAgent: React.PropTypes.string,
 		styledComponentAutoPrefix: React.PropTypes.string
 	}
 })
+*/
 
 export default StyledComponentMixin

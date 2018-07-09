@@ -1,12 +1,68 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fetch/2.0.3/fetch.js"></script>
 <script>
-	function createUser(name, token) {
+
+const error = data => {
+	const error = new Error(data.message)
+	Object.assign(error, data)
+	return error
+}
+
+const normalize = promise => 
+	promise
+		.catch(err => {
+			throw {
+				result: 'error',
+				error: 'fail',
+				message: 'Failed to fetch'
+			}
+		})
+		.then(res => {
+			if (res.ok) {
+				try {
+					return res.json()
+				} catch (e) {
+					throw {
+						result: 'error',
+						error: 'json',
+						message: 'JSON parse error'
+					}
+				}
+			}
+
+			throw {
+				result: 'error',
+				error: 'http',
+				message: `HTTP Error`,
+				status: res.status
+			}
+		})
+		.then(json => {
+			if (json.result === 'ok') return json
+			else throw json
+		})
+
+const request = url => {
+	normalize(fetch(url, {
+		method: 'GET',
+		headers: {
+		  'Content-Type': 'application/json'
+		}
+	}))
+		.then(result => {
+			console.log('SUCCESS', result)
+		})
+		.catch(err => {
+			console.log('ERROR', err)
+		})
+}
+
+	function createUser(name, telegramUserId) {
 		fetch('/api/users/create', {
 			method: 'POST',
 			headers: {
 			  'Content-Type': 'application/json'
 			},
-			body: JSON.stringify({name, token})
+			body: JSON.stringify({name, telegramUserId})
 		})
 			.then(function(res) {
 				if (!res.ok) throw new Error(res.statusText)
@@ -23,9 +79,10 @@
 		fetch('/api/packs/create', {
 			method: 'POST',
 			headers: {
-			  'Content-Type': 'application/json'
+			  'Content-Type': 'application/json',
+			  'Authorization-Token': token
 			},
-			body: JSON.stringify({token, name})
+			body: JSON.stringify({ name })
 		})
 			.then(function(res) {
 				if (!res.ok) throw new Error(res.statusText)

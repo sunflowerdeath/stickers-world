@@ -1,24 +1,20 @@
-import React from 'react'
+import React, { Component } from 'react'
+import floral from 'floral'
 
-import styledComponent from '@@/utils/styledComponent'
+const styles = props => ({
+	root: {
+		display: 'flex',
+		flexWrap: 'wrap',
+		paddingLeft: props.vMargin
+	}
+})
 
-@styledComponent
-export default class GridList extends React.Component {
-	static displayName = 'GridList'
-
+@floral(styles)
+class GridList extends Component {
 	static defaultProps = {
 		minSize: 100,
 		vMargin: 24,
 		hMargin: 24
-	}
-
-	static styles = (props) => {
-		let root = {
-			display: 'flex',
-			flexWrap: 'wrap',
-			paddingLeft: props.vMargin
-		}
-		return {root}
 	}
 
 	constructor(props) {
@@ -27,7 +23,7 @@ export default class GridList extends React.Component {
 			itemSize: this.getItemSize(props)
 		}
 		this.windowResizeListener = () => {
-			this.setState({itemSize: this.getItemSize(this.props)})
+			this.setState({ itemSize: this.getItemSize(this.props) })
 		}
 		window.addEventListener('resize', this.windowResizeListener)
 	}
@@ -36,70 +32,60 @@ export default class GridList extends React.Component {
 		window.removeEventListener('resize', this.windowResizeListener)
 	}
 
-	getItemSize({minSize, vMargin}) {
-		let screenWidth = document.documentElement.clientWidth
-		let itemsInRow = Math.floor((screenWidth - vMargin) / (minSize + vMargin))
+	getItemSize({ minSize, vMargin }) {
+		const screenWidth = document.documentElement.clientWidth
+		const itemsInRow = Math.floor((screenWidth - vMargin) / (minSize + vMargin))
 		return (screenWidth - vMargin * (itemsInRow + 1)) / itemsInRow
 	}
 
 	render() {
-		let {items, hMargin, vMargin} = this.props
+		const { items, hMargin, vMargin } = this.props
+		const { computedStyles } = this.state
 
-		let itemsElems = items.map(({key, children, label}) => {
-			return <GridListItem
+		const itemsElems = items.map(({ key, children, label }) => (
+			<GridListItem
 				key={key}
-				children={children}
 				label={label}
 				size={this.state.itemSize}
 				hMargin={hMargin}
 				vMargin={vMargin}
 				onClick={() => this.props.onClickItem && this.props.onClickItem(key)}
-			/>
-		})
-
-		return <div style={this.styles.root}>{itemsElems}</div>
-	}
-}
-
-@styledComponent
-class GridListItem extends React.Component {
-	static styles = (props) => {
-		let {size, hMargin, vMargin} = props
-
-		let root = {
-			marginRight: hMargin,
-			marginBottom: vMargin,
-			width: size
-		}
-
-		let content = {
-			height: size,
-			display: 'flex',
-			alignItems: 'stretch',
-			marginBottom: 12
-		}
-
-		let label = {
-			fontSize: 14,
-			color: 'white',
-			textAlign: 'center'
-		}
-
-		return {root, content, label}
-	}
-
-	render() {
-		let {children, label, onClick} = this.props
-		return (
-			<div
-				style={this.styles.root}
-				onClick={onClick}
 			>
-				<div style={this.styles.content}>{children}</div>
-				<div style={this.styles.label}>{label}</div>
-			</div>
-		)
+				{children}
+			</GridListItem>
+		))
+
+		return <div style={computedStyles.root}>{itemsElems}</div>
 	}
-
-
 }
+
+const itemStyles = ({ size, hMargin, vMargin }) => ({
+	root: {
+		marginRight: hMargin,
+		marginBottom: vMargin,
+		width: size
+	},
+	content: {
+		height: size,
+		display: 'flex',
+		alignItems: 'stretch',
+		marginBottom: 12
+	},
+	label: {
+		fontSize: 14,
+		color: 'white',
+		textAlign: 'center'
+	}
+})
+
+const GridListItem = floral(itemStyles)(props => {
+	const { children, label, onClick, computedStyles } = props
+	return (
+		<div style={computedStyles.root} onClick={onClick}>
+			<div style={computedStyles.content}>{children}</div>
+			<div style={computedStyles.label}>{label}</div>
+		</div>
+	)
+})
+
+export default GridList

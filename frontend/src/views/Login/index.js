@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import { withRouter } from 'react-router'
 import floral from 'floral'
 import Taply from 'taply'
@@ -25,9 +26,9 @@ const SYMBOLS = {
 
 const PLATFORM = 'web'
 
-const getStyles = (props, state, context) => {
+const styles = props => {
 	const smallHeight = props.matches.smallHeight
-	const supportWebp = context.modernizr.webp
+	const supportWebp = false // TODO context.modernizr.webp
 
 	const margin = smallHeight ? 32 : 64
 	const stickers = {
@@ -53,7 +54,7 @@ const getStyles = (props, state, context) => {
 		},
 		pepa: {
 			position: 'fixed',
-			top: '23%',
+			top: '21%',
 			right: 0,
 			width: '24vh',
 			height: '24vh',
@@ -116,12 +117,10 @@ const getStyles = (props, state, context) => {
 
 @withRouter
 @matchMediaDecorator({ smallHeight: '(max-height: 700px)' })
-@floral
+@floral(styles)
 export default class LoginView extends React.Component {
-	static styles = getStyles
-
 	static contextTypes = {
-		modernizr: React.PropTypes.object
+		modernizr: PropTypes.object
 	}
 
 	constructor() {
@@ -146,17 +145,22 @@ export default class LoginView extends React.Component {
 	}
 
 	renderBlocks() {
+		const { computedStyles } = this.state
 		return (
 			<div>
-				<div style={this.styles.block}>
+				<div style={computedStyles.block}>
 					<Tappable
 						style={{ cursor: 'pointer' }}
-						onTap={() => this.props.history.push('/packs')}
+						onTap={() =>
+							this.props.history.push('https://telegram.org/')
+						}
 					>
-						<div style={this.styles.telegramLogo} />
-						<div style={this.styles.button}>Authorize in telegram bot</div>
+						<div style={computedStyles.telegramLogo} />
+						<div style={computedStyles.button}>
+							Authorize in telegram bot
+						</div>
 					</Tappable>
-					<div style={this.styles.caption}>
+					<div style={computedStyles.caption}>
 						Send <span style={{ color: 'white' }}>/start</span>
 						{SYMBOLS.sp}
 						to Stickers World bot and{SYMBOLS.nbsp}then click on link in
@@ -167,9 +171,9 @@ export default class LoginView extends React.Component {
 					</div>
 				</div>
 				<Taply onTap={this.onTapCreate}>
-					<div style={this.styles.block}>
-						<div style={this.styles.button}>Create sticker</div>
-						<div style={this.styles.caption}>
+					<div style={computedStyles.block}>
+						<div style={computedStyles.button}>Create sticker</div>
+						<div style={computedStyles.caption}>
 							Create sticker without authorization
 							<br />
 							and save png file to device.
@@ -179,7 +183,7 @@ export default class LoginView extends React.Component {
 				<input
 					type="file"
 					accept="image/*"
-					style={this.styles.fileInput}
+					style={computedStyles.fileInput}
 					ref={ref => {
 						this.fileInputRef = ref
 					}}
@@ -190,15 +194,16 @@ export default class LoginView extends React.Component {
 	}
 
 	render() {
+		const { computedStyles } = this.state
 		return (
-			<div style={this.styles.root}>
-				<div style={this.styles.moneyface} />
-				<div style={this.styles.gnomekid} />
-				<div style={this.styles.pepa} />
-				<div style={this.styles.pepe} />
+			<div style={computedStyles.root}>
+				<div style={computedStyles.moneyface} />
+				<div style={computedStyles.gnomekid} />
+				<div style={computedStyles.pepa} />
+				<div style={computedStyles.pepe} />
 
-				<div style={this.styles.content}>
-					<Logo style={this.styles.logo} />
+				<div style={computedStyles.content}>
+					<Logo style={computedStyles.logo} />
 					{this.renderBlocks()}
 				</div>
 			</div>

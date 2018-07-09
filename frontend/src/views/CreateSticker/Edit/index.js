@@ -87,15 +87,22 @@ const drawOutline = (ctx, points) => {
 	ctx.stroke()
 }
 
-const distanceBetweenPoints = (a, b) => Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2)
+const distanceBetweenPoints = (a, b) =>
+	Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2)
 
 const centerBetweenPoints = (a, b) => ({
 	x: a.x + (b.x - a.x) / 2,
 	y: a.y + (b.y - a.y) / 2
 })
 
-const getStyles = (props, state) => {
-	const { brushSize, showBrushPreview, background, transform, scaleMultiplier } = state
+const styles = (props, state) => {
+	const {
+		brushSize,
+		showBrushPreview,
+		background,
+		transform,
+		scaleMultiplier
+	} = state
 
 	const scaledBrushSize = brushSize * transform.scale / scaleMultiplier
 	const brush = {
@@ -172,7 +179,7 @@ const getStyles = (props, state) => {
 	}
 }
 
-@floral
+@floral(styles)
 @bindMethods(
 	'onTapBack',
 	'onTapDone',
@@ -183,14 +190,12 @@ const getStyles = (props, state) => {
 	'onPinchMove',
 	'onChangeTab'
 )
-export default class EditView extends Component {
+class EditView extends Component {
 	static propTypes = {
 		image: PropTypes.instanceOf(ImageData).isRequired,
 		onGoBack: PropTypes.func.isRequired,
 		onGoNext: PropTypes.func.isRequired
 	}
-
-	static styles = getStyles
 
 	constructor(props) {
 		super()
@@ -365,7 +370,9 @@ export default class EditView extends Component {
 	drawOutline(ctx) {
 		const { outlineColor, outlineWidth } = this.state
 
-		const outlines = getOutlines(ctx.getImageData(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT))
+		const outlines = getOutlines(
+			ctx.getImageData(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
+		)
 		ctx.strokeStyle = outlineColor
 
 		// 1px inner outline
@@ -394,6 +401,8 @@ export default class EditView extends Component {
 	}
 
 	renderTopBar() {
+		const { computedStyles } = this.state
+
 		const backIcon = (
 			<IconButton
 				svg={chevronLeftSvg}
@@ -406,7 +415,7 @@ export default class EditView extends Component {
 		const doneButton = <FlatButton onClick={this.onTapDone}>Done</FlatButton>
 
 		return (
-			<div style={this.styles.topBar}>
+			<div style={computedStyles.topBar}>
 				<Toolbar style={{ paddingLeft: 0 }}>
 					{backIcon}
 					<div
@@ -428,12 +437,12 @@ export default class EditView extends Component {
 	}
 
 	renderMaskTab() {
-		const { unmask, showMasked, showBrushPreview } = this.state
+		const { computedStyles, unmask, showMasked, showBrushPreview } = this.state
 		const lightWhite = 'rgba(255, 255, 255, 0.54)'
 
 		return (
-			<div style={this.styles.tab} key="mask">
-				{showBrushPreview && <div style={this.styles.brushPreview} />}
+			<div style={computedStyles.tab} key="mask">
+				{showBrushPreview && <div style={computedStyles.brushPreview} />}
 				<Toolbar>
 					<ToolbarGroup>
 						<IconButton
@@ -449,13 +458,15 @@ export default class EditView extends Component {
 						/>
 					</ToolbarGroup>
 					<Slider
-						style={this.styles.slider}
+						style={computedStyles.slider}
 						sliderStyle={{ margin: 0 }}
 						min={20}
 						max={50}
 						step={1}
 						value={this.state.brushSize}
-						onChange={(event, value) => this.setState({ brushSize: value })}
+						onChange={(event, value) =>
+							this.setState({ brushSize: value })
+						}
 						onDragStart={() => this.setState({ showBrushPreview: true })}
 						onDragStop={() => this.setState({ showBrushPreview: false })}
 					/>
@@ -470,14 +481,14 @@ export default class EditView extends Component {
 	}
 
 	renderEffectsTab() {
-		const { outlineWidth, shadowSize } = this.state
+		const { computedStyles, outlineWidth, shadowSize } = this.state
 
 		return (
-			<div style={this.styles.tab} key="effects">
+			<div style={computedStyles.tab} key="effects">
 				<Toolbar>
 					<ToolbarCaption style={{ width: 75 }}>Border</ToolbarCaption>
 					<Slider
-						style={this.styles.slider}
+						style={computedStyles.slider}
 						sliderStyle={{ margin: 0 }}
 						min={0}
 						max={8}
@@ -491,13 +502,15 @@ export default class EditView extends Component {
 				<Toolbar>
 					<ToolbarCaption style={{ width: 75 }}>Shadow</ToolbarCaption>
 					<Slider
-						style={this.styles.slider}
+						style={computedStyles.slider}
 						sliderStyle={{ margin: 0 }}
 						min={3}
 						max={10}
 						step={1}
 						value={shadowSize}
-						onChange={(event, value) => this.setState({ shadowSize: value })}
+						onChange={(event, value) =>
+							this.setState({ shadowSize: value })
+						}
 					/>
 					<IconButton svg={visibilitySvg} fill="white" />
 				</Toolbar>
@@ -507,12 +520,12 @@ export default class EditView extends Component {
 
 	/*
 	renderTextTab() {
-		return <div style={this.styles.tab}>TEXT</div>
+		return <div style={computedStyles.tab}>TEXT</div>
 	}
 	*/
 
 	renderBottomBar() {
-		const { selectedTab } = this.state
+		const { computedStyles, selectedTab } = this.state
 
 		const tabs = (
 			<Tabs value={this.state.selectedTab} onChange={this.onChangeTab}>
@@ -529,7 +542,7 @@ export default class EditView extends Component {
 		}
 
 		return (
-			<div style={this.styles.bottomBar}>
+			<div style={computedStyles.bottomBar}>
 				{content}
 				{tabs}
 			</div>
@@ -537,7 +550,7 @@ export default class EditView extends Component {
 	}
 
 	renderCanvas() {
-		const { isMasking, selectedTab } = this.state
+		const { computedStyles, isMasking, selectedTab } = this.state
 
 		return (
 			<Taply
@@ -549,9 +562,9 @@ export default class EditView extends Component {
 				onPinchStart={this.onPinchStart}
 				onPinchMove={this.onPinchMove}
 			>
-				<div style={{ ...this.styles.image, height: CANVAS_HEIGHT }}>
+				<div style={{ ...computedStyles.image, height: CANVAS_HEIGHT }}>
 					<canvas
-						style={this.styles.canvas}
+						style={computedStyles.canvas}
 						ref={ref => {
 							this.canvasRef = ref
 						}}
@@ -560,7 +573,7 @@ export default class EditView extends Component {
 					/>
 					{isMasking && (
 						<div
-							style={this.styles.brush}
+							style={computedStyles.brush}
 							ref={ref => {
 								this.brushRef = ref
 							}}
@@ -572,8 +585,9 @@ export default class EditView extends Component {
 	}
 
 	render() {
+		const { computedStyles } = this.state
 		return (
-			<div style={this.styles.root}>
+			<div style={computedStyles.root}>
 				{this.renderTopBar()}
 				{this.renderCanvas()}
 				{this.renderBottomBar()}
@@ -581,3 +595,5 @@ export default class EditView extends Component {
 		)
 	}
 }
+
+export default EditView

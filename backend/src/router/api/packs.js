@@ -1,24 +1,32 @@
 const Router = require('koa-router')
 
 const {knex} = require('../../db')
-const auth = require('../../middleware/auth')
+import auth from '../../middleware/auth'
+import StickerPack from '../../models/StickerPack'
 
 const router = new Router()
 
 router.use(auth)
 
-router.post('/', async (ctx) => {
-	const packs = await knex('packs').where({'user_id': ctx.user.id})
-	ctx.body = {result: 'ok', packs}
+router.get('/', async ctx => {
+	const packs = await StickerPack.find({
+		where: { user: ctx.user }
+	})
+	ctx.body = { result: 'ok', packs }
 })
 
-router.post('/create', async (ctx) => {
-	console.log('CREATE', ctx.request.body.name)
-	const [id] = await knex('packs').insert({
-		'name': ctx.request.body.name,
-		'user_id': ctx.user.id
+router.post('/create', async ctx => {
+	const pack = StickerPack.create({
+		name: ctx.request.body.name,
+		user: ctx.user
 	})
-	ctx.body = {result: 'ok', id}
+	await pack.save()
+	ctx.body = { result: 'ok', id: pack.id }
+})
+
+router.post('/remove/:id', async ctx => {
+	await Pack.removeById(id)
+	ctx.body = { result: 'ok' }
 })
 
 router.post('/:id', async (ctx) => {

@@ -1,13 +1,18 @@
-const {knex} = require('../db')
+import AuthToken from '../models/AuthToken'
 
-module.exports = async (ctx, next) => {
-	let user = await knex('users')
-		.where({token: ctx.request.body.token})
-		.first()
-	if (user) {
-		ctx.user = user
+export default async (ctx, next) => {
+	console.log(ctx.request.headers)
+	const token = await AuthToken.findOne({
+		where: {
+			id: ctx.request.headers['authorization-token']
+		},
+		relations: ['user']
+	})
+
+	if (token) {
+		ctx.user = token.user
 		await next()
 	} else {
-		ctx.body = {result: 'error', error: 'invalid user token'}
+		ctx.body = { result: 'error', error: 'Invalid auth token' }
 	}
 }

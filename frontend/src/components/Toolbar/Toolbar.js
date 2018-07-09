@@ -1,22 +1,19 @@
-import React, { Component } from 'react'
+import React from 'react'
 import floral from 'floral'
 
-@floral
-class Toolbar extends Component {
-	static styles = {
-		root: {
-			color: 'white',
-			display: 'flex',
-			justifyContent: 'space-between',
-			padding: '0 24px',
-			height: 48,
-			alignItems: 'center'
-		}
-	}
-
-	render() {
-		return <div style={this.styles.root}>{this.props.children}</div>
+const styles = {
+	root: {
+		color: 'white',
+		display: 'flex',
+		justifyContent: 'space-between',
+		padding: '0 24px',
+		height: 48,
+		alignItems: 'center'
 	}
 }
+
+const Toolbar = floral(styles)(({ computedStyles, children }) => (
+	<div style={computedStyles.root}>{children}</div>
+))
 
 export default Toolbar

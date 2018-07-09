@@ -1,19 +1,15 @@
-import React, { Component } from 'react'
+import React from 'react'
 import floral from 'floral'
 
-@floral
-class ToolbarCaption extends Component {
-	static styles = {
-		root: {
-			fontWeight: 500,
-			textTransform: 'uppercase',
-			marginRight: 24
-		}
-	}
-
-	render() {
-		return <div style={this.styles.root}>{this.props.children}</div>
+const styles = {
+	root: {
+		fontWeight: 500,
+		textTransform: 'uppercase',
+		marginRight: 24
 	}
 }
+const ToolbarCaption = floral(styles)(({ computedStyles, children }) => (
+	<div style={computedStyles.root}>{children}</div>
+))
 
 export default ToolbarCaption

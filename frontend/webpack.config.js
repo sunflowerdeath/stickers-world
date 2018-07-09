@@ -8,14 +8,15 @@ config.entry = ['babel-polyfill', './src/index.js']
 config.output.publicPath = DEBUG ? '/' : '/static/'
 
 config.module.rules.push({
-	test: /\.modernizrrc$/,
+	type: 'javascript/auto',
+	test: /modernizr.config.json$/,
 	use: ['modernizr-loader', 'json-loader']
 })
 
 config.resolve = {
 	alias: {
 		'@@': path.resolve(__dirname, 'src'),
-		modernizr$: path.resolve(__dirname, '.modernizrrc')
+		modernizr$: path.resolve(__dirname, 'modernizr.config.json')
 	}
 }
 

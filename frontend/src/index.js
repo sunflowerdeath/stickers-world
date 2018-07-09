@@ -1,5 +1,6 @@
 import Modernizr from 'modernizr'
 import React from 'react'
+import PropTypes from 'prop-types'
 import ReactDOM from 'react-dom'
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider'
 import { Provider } from 'mobx-react'
@@ -11,9 +12,11 @@ import App from './app'
 
 const store = new StickersWorldStore(api)
 
+window.store = store
+
 class ModernizrContextProvider extends React.Component {
 	static childContextTypes = {
-		modernizr: React.PropTypes.object
+		modernizr: PropTypes.object
 	}
 	getChildContext() {
 		return { modernizr: this.props.features }

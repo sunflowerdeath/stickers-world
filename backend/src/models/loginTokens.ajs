@@ -1,0 +1,17 @@
+let {knex} = require('./db')
+
+const create = async user => {
+	await knex('login_tokens').insert({
+		user_id: user.id,
+		value: nanoid()
+	})
+}
+
+const check = async token => {
+	const [token] = await knex('login_tokens').where({value: token})
+	if (!token) return false
+	await knex('login_tokens').where({value: token}).delete()
+	return true
+}
+
+export default { create, check }

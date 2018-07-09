@@ -120,7 +120,13 @@ const fitScale = (crop, image) => {
 		const constraint = constraints[key]
 		const rotatedPoint = rotatePoint(point, center, delta, crop.angle)
 		if (checkConstraint(rotatedPoint, constraint)) return
-		const pointScale = pointFitScale(point, center, delta, crop.angle, constraint)
+		const pointScale = pointFitScale(
+			point,
+			center,
+			delta,
+			crop.angle,
+			constraint
+		)
 		if (pointScale < scale && pointScale > 0) scale = pointScale
 	})
 
@@ -171,7 +177,7 @@ const resizeCrop = (crop, dx, dy, direction) => {
 	}
 
 	// point that is opposite to resized corner must remain at the same position
-	// but is moves because rotate origin moves
+	// it moves because rotate origin moves
 	const point = rotatePoint(
 		getCropCorners(crop)[oppositeCorner],
 		[crop.width / 2, crop.height / 2],
@@ -211,23 +217,25 @@ const checkConstraint2 = (point, constraint) => {
 	return { x: dx, y: dy }
 }
 
-const fitResize = (crop, image) => {
+const fitResize = (crop, image, activeCorner) => {
 	const constraints = getCornersConstraints(image)
 
 	let rcrop = crop
-	;['br', 'bl', 'tr', 'tl'].forEach(key => {
-		const corner = getCropCorners(rcrop)[key]
-		const constraint = constraints[key]
+	;['br', 'bl', 'tr', 'tl']
+		.filter(corner => corner !== activeCorner)
+		.forEach(key => {
+			const corner = getCropCorners(rcrop)[key]
+			const constraint = constraints[key]
 
-		const center = [rcrop.width / 2, rcrop.height / 2]
-		const delta = [rcrop.left, rcrop.top]
-		const rcorner = rotatePoint(corner, center, delta, -crop.angle)
+			const center = [rcrop.width / 2, rcrop.height / 2]
+			const delta = [rcrop.left, rcrop.top]
+			const rcorner = rotatePoint(corner, center, delta, -crop.angle)
 
-		const { x, y } = checkConstraint2(rcorner, constraint)
-		const dx = Math.cos(crop.angle) * x - Math.sin(crop.angle) * y
-		const dy = Math.cos(crop.angle) * y + Math.sin(crop.angle) * x
-		if (dx !== 0 || dy !== 0) rcrop = resizeCrop(rcrop, dx, dy, key)
-	})
+			const { x, y } = checkConstraint2(rcorner, constraint)
+			const dx = Math.cos(crop.angle) * x - Math.sin(crop.angle) * y
+			const dy = Math.cos(crop.angle) * y + Math.sin(crop.angle) * x
+			if (dx !== 0 || dy !== 0) rcrop = resizeCrop(rcrop, dx, dy, key)
+		})
 
 	return rcrop
 }
@@ -280,42 +288,40 @@ const getScale = crop => {
 	return Math.min(horizScale, vertScale)
 }
 
-const getStyles = (props, state) => {
-	const { crop, aspect, isPanning, isResizing, resizingCrop } = state
-	const { image } = props
-
-	const scale = getScale(crop)
-	const cropWidth = crop.width * scale
-	const cropHeight = crop.height * scale
+const getContainerStyle = (image, crop, scale) => {
 	const top =
 		TOP_BAR_HEIGHT +
-		(SCREEN_HEIGHT - TOP_BAR_HEIGHT - BOTTOM_PANEL_HEIGHT - cropHeight) / 2
-	const left = (SCREEN_WIDTH - cropWidth) / 2
+		(SCREEN_HEIGHT -
+			TOP_BAR_HEIGHT -
+			BOTTOM_PANEL_HEIGHT -
+			crop.height * scale) /
+			2
+	const left = (SCREEN_WIDTH - crop.width * scale) / 2
 	const originTop = (crop.top + crop.height / 2) * scale
 	const originLeft = (crop.left + crop.width / 2) * scale
-
-	const resizingCropStyle = isResizing && {
+	return {
 		position: 'absolute',
-		top: 0,
-		left: 0,
-		border: '2px solid red',
-		width: resizingCrop.width * scale,
-		height: resizingCrop.height * scale
+		willChange: 'transform, width, height, opacity',
+		width: image.width * scale,
+		height: image.height * scale,
+		transform: [
+			`translateY(${top - crop.top * scale}px)`,
+			`translateX(${left - crop.left * scale}px)`,
+			`rotate(${crop.angle}rad)`
+		].join(' '),
+		transformOrigin: `${originLeft}px ${originTop}px`
 	}
+}
+
+const styles = (props, state) => {
+	const { crop, aspect, isPanning, isResizing, prevCrop } = state
+	const { image } = props
+
+	const centerCrop = isResizing ? prevCrop : crop
+	const scale = getScale(centerCrop)
 
 	return {
-		container: {
-			position: 'absolute',
-			width: image.width * scale,
-			height: image.height * scale,
-			transform: [
-				`translateY(${top - crop.top * scale}px)`,
-				`translateX(${left - crop.left * scale}px)`,
-				`rotate(${crop.angle}rad)`
-			].join(' '),
-			transformOrigin: `${originLeft}px ${originTop}px`,
-			willChange: 'transform, width, height, opacity'
-		},
+		container: getContainerStyle(image, centerCrop, scale),
 		icon: {
 			fill: 'white'
 		},
@@ -328,8 +334,8 @@ const getStyles = (props, state) => {
 			position: 'absolute',
 			top: 0,
 			left: 0,
-			width: cropWidth,
-			height: cropHeight,
+			width: crop.width * scale,
+			height: crop.height * scale,
 			transform: [
 				`translateY(${crop.top * scale}px)`,
 				`translateX(${crop.left * scale}px)`,
@@ -343,7 +349,6 @@ const getStyles = (props, state) => {
 			boxSizing: 'border-box',
 			borderRadius: aspect === 'circle' ? '50%' : 0
 		},
-		resizingCrop: resizingCropStyle,
 		canvas: {
 			width: '100%',
 			height: '100%'
@@ -352,7 +357,7 @@ const getStyles = (props, state) => {
 	}
 }
 
-@floral
+@floral(styles)
 @bindMethods(
 	'onPanStart',
 	'onPanMove',
@@ -371,8 +376,6 @@ export default class AdjustView extends Component {
 		onGoBack: PropTypes.func.isRequired,
 		onGoNext: PropTypes.func.isRequired
 	}
-
-	static styles = getStyles
 
 	constructor(props) {
 		super()
@@ -412,13 +415,16 @@ export default class AdjustView extends Component {
 		const crop = this.initialCrop
 		const scale = getScale(crop)
 
+		event.preventDefault()
+
 		const movedCrop = {
 			...crop,
 			left:
 				crop.left -
 				(dx * Math.cos(crop.angle) + dy * Math.sin(crop.angle)) / scale,
 			top:
-				crop.top + (dx * Math.sin(crop.angle) - dy * Math.cos(crop.angle) / scale)
+				crop.top +
+				(dx * Math.sin(crop.angle) - dy * Math.cos(crop.angle) / scale)
 		}
 		const constrainedCrop = fitPosition(movedCrop, image)
 		this.setState({ crop: constrainedCrop })
@@ -446,15 +452,16 @@ export default class AdjustView extends Component {
 		this.direction = direction
 		this.initialCrop = this.state.crop
 
-		this.setState({ isResizing: true, resizingCrop: this.state.crop })
+		this.setState({ isResizing: true, prevCrop: this.state.crop })
 	}
 
 	onResizeMove(event, touches) {
 		const { dx, dy } = touches[0]
 		const { image } = this.props
-		const { crop } = this.state
-		const scale = getScale(crop)
+		const { prevCrop } = this.state
+		const scale = getScale(prevCrop)
 
+		event.preventDefault()
 		event.stopPropagation()
 
 		const resizedCrop = resizeCrop(
@@ -463,14 +470,14 @@ export default class AdjustView extends Component {
 			dy / scale,
 			this.direction
 		)
+		// console.log(this.direction)
+		const omit = RESIZE_DIRECTIONS[this.direction][2]
 		const fitCrop = fitResize(resizedCrop, image)
-		this.setState({ resizingCrop: fitCrop })
+		this.setState({ crop: fitCrop })
 	}
 
 	onResizeEnd() {
-		const { resizingCrop } = this.state
-
-		this.setState({ isResizing: false, crop: resizingCrop })
+		this.setState({ isResizing: false })
 	}
 
 	// PINCH
@@ -508,11 +515,16 @@ export default class AdjustView extends Component {
 		ctx.save()
 		ctx.translate(originLeft, originTop)
 		ctx.rotate(crop.angle)
-		ctx.drawImage(this.imageRef, -originLeft - crop.left, -originTop - crop.top)
+		ctx.drawImage(
+			this.imageRef,
+			Math.ceil(-originLeft - crop.left),
+			Math.ceil(-originTop - crop.top)
+		)
 		ctx.restore()
 	}
 
 	renderResizeCorners() {
+		const { computedStyles } = this.state
 		return ['tl', 'tr', 'bl', 'br'].map(direction => (
 			<Taply
 				key={direction}
@@ -522,23 +534,24 @@ export default class AdjustView extends Component {
 			>
 				<SvgIcon
 					svg={cornerIcon}
-					style={this.styles[`corner${upperFirst(direction)}`]}
+					style={computedStyles[`corner${upperFirst(direction)}`]}
 				/>
 			</Taply>
 		))
 	}
 
 	renderTopBar() {
+		const { computedStyles } = this.state
 		return (
 			<TopBar
 				leftIcon={
 					<Taply onTap={this.props.onGoBack}>
-						<SvgIcon svg={chevronLeftSvg} style={this.styles.icon} />
+						<SvgIcon svg={chevronLeftSvg} style={computedStyles.icon} />
 					</Taply>
 				}
 				rightIcon={
 					<Taply onTap={this.onTapNext}>
-						<SvgIcon svg={chevronLeftSvg} style={this.styles.icon} />
+						<SvgIcon svg={chevronLeftSvg} style={computedStyles.icon} />
 					</Taply>
 				}
 				style={{ background: 'none' }}
@@ -586,19 +599,23 @@ export default class AdjustView extends Component {
 
 	render() {
 		const { image } = this.props
-		const { crop, isResizing } = this.state
+		const { crop, isResizing, computedStyles } = this.state
 
 		return (
-			<OverlayLayout top={this.renderTopBar()} bottom={this.renderBottomBar()}>
+			<OverlayLayout
+				top={this.renderTopBar()}
+				bottom={this.renderBottomBar()}
+				style={{ MozUserSelect: 'none' }}
+			>
 				<Taply
 					onTapStart={this.onPanStart}
 					onTapMove={this.onPanMove}
 					onTapEnd={this.onPanEnd}
 				>
-					<div style={this.styles.container}>
+					<div style={computedStyles.container}>
 						<img
 							alt=""
-							style={this.styles.image}
+							style={computedStyles.image}
 							src={image.src}
 							ref={ref => {
 								this.imageRef = ref
@@ -607,17 +624,16 @@ export default class AdjustView extends Component {
 								this.imageLoaded = true
 							}}
 						/>
-						<div style={this.styles.crop}>
+						<div style={computedStyles.crop}>
 							<canvas
-								style={this.styles.canvas}
-								width={crop.width}
-								height={crop.height}
+								style={computedStyles.canvas}
+								width={Math.round(crop.width)}
+								height={Math.round(crop.height)}
 								ref={ref => {
 									this.canvasRef = ref
 								}}
 							/>
 							{this.renderResizeCorners()}
-							{isResizing && <div style={this.styles.resizingCrop} />}
 						</div>
 					</div>
 				</Taply>

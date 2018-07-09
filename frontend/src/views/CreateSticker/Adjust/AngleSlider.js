@@ -5,7 +5,51 @@ import Taply from 'taply'
 
 import bindMethods from '@@/utils/bindMethods'
 
-@floral
+const styles = (props, state) => ({
+	root: {
+		cursor: state.isPressed ? 'move' : 'default',
+		MozUserSelect: 'none'
+	},
+	pointer: {
+		width: 10,
+		height: 10,
+		margin: 'auto',
+		marginBottom: 5,
+		background: 'white'
+	},
+	dots: {
+		display: 'flex',
+		margin: 'auto',
+		height: 24,
+		alignItems: 'center',
+		marginRight: 30,
+		marginLeft: 30,
+		justifyContent: 'space-between',
+		marginBottom: 5,
+		transform: `translateX(${props.value / 90 * 100}%`,
+		willChange: 'transform'
+	},
+	dot: {
+		width: 2,
+		height: 2,
+		background: 'white',
+		borderRadius: 2
+	},
+	bar: {
+		width: 2,
+		height: 24,
+		borderRadius: 2,
+		background: 'white'
+	},
+	value: {
+		color: 'white',
+		fontSize: 14,
+		textAlign: 'center',
+		lineHeight: '20px'
+	}
+})
+
+@floral(styles)
 @bindMethods('onTapStart', 'onTapMove', 'onTapEnd')
 class AngleSlider extends Component {
 	static propTypes = {
@@ -14,49 +58,6 @@ class AngleSlider extends Component {
 		onRotate: PropTypes.func,
 		onRotateEnd: PropTypes.func
 	}
-
-	static styles = (props, state) => ({
-		root: {
-			cursor: state.isPressed ? 'move' : 'default'
-		},
-		pointer: {
-			width: 10,
-			height: 10,
-			margin: 'auto',
-			marginBottom: 5,
-			background: 'white'
-		},
-		dots: {
-			display: 'flex',
-			margin: 'auto',
-			height: 24,
-			alignItems: 'center',
-			marginRight: 30,
-			marginLeft: 30,
-			justifyContent: 'space-between',
-			marginBottom: 5,
-			transform: `translateX(${props.value / 90 * 100}%`,
-			willChange: 'transform'
-		},
-		dot: {
-			width: 2,
-			height: 2,
-			background: 'white',
-			borderRadius: 2
-		},
-		bar: {
-			width: 2,
-			height: 24,
-			borderRadius: 2,
-			background: 'white'
-		},
-		value: {
-			color: 'white',
-			fontSize: 14,
-			textAlign: 'center',
-			lineHeight: '20px'
-		}
-	})
 
 	state = {
 		isPressed: false
@@ -84,10 +85,16 @@ class AngleSlider extends Component {
 
 	render() {
 		const { value } = this.props
+		const { computedStyles } = this.state
 
 		const dots = []
 		for (let i = -45; i <= +45; i += 5) {
-			dots.push(<div key={i} style={i === 0 ? this.styles.bar : this.styles.dot} />)
+			dots.push(
+				<div
+					key={i}
+					style={i === 0 ? computedStyles.bar : computedStyles.dot}
+				/>
+			)
 		}
 
 		return (
@@ -96,17 +103,17 @@ class AngleSlider extends Component {
 				onTapMove={this.onTapMove}
 				onTapEnd={this.onTapEnd}
 			>
-				<div style={this.styles.root}>
-					<div style={this.styles.pointer} />
+				<div style={computedStyles.root}>
+					<div style={computedStyles.pointer} />
 					<div
-						style={this.styles.dots}
+						style={computedStyles.dots}
 						ref={ref => {
 							this.dotsRef = ref
 						}}
 					>
 						{dots}
 					</div>
-					<div style={this.styles.value}>{Math.round(value)}°</div>
+					<div style={computedStyles.value}>{Math.round(value)}°</div>
 				</div>
 			</Taply>
 		)

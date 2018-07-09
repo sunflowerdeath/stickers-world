@@ -1,7 +1,7 @@
 const Router = require('koa-router')
 
 const {knex} = require('../../db')
-const auth = require('../../middleware/auth')
+import auth from '../../middleware/auth'
 
 const router = new Router()
 

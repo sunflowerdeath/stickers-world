@@ -1,36 +1,48 @@
-import {observable, action, when} from 'mobx'
-import {fromPromise} from 'mobx-utils'
+import { observable, action } from 'mobx'
+import { fromPromise } from 'mobx-utils'
 
 import StickerPackStore from './StickerPackStore'
 
-export default class StickersWorldStore {
+class NotificationContext {
+	create(message) {
+		alert(message)
+	}
+}
+
+class StickersWorldStore {
 	@observable user
-	@observable packs = observable.map()
-	@observable createResult
+	@observable packs = {}
+
+	@observable createPackResult
 
 	constructor(api) {
 		this.api = api
-		const {user, packs} = api.getInitialData()
+		const { user, packs } = api.getInitialData()
 		this.user = user
 		if (packs) {
 			packs.forEach(pack => {
-				const store = new StickerPackStore(api, pack)
-				this.packs.set(pack.id, store)
+				this.packs[pack.id] = new StickerPackStore(api, pack)
 			})
 		}
+		this.notificationContext = new NotificationContext()
+	}
 
-		when(
-			() => this.createResult && this.createResult.state === 'fulfulled',
-			() => {
-				const {value: {id}, data} = this.createResult
-				this.packs.set(id, new StickerPackStore({...data, id}))
-			}
+	@action
+	async createPack(data, history) {
+		this.createPackResult = fromPromise(this.api.createStickerPack(data))
+		this.createPackResult.then(
+			({ id }) => {
+				this.packs[id] = new StickerPackStore(this.api, { ...data, id })
+				history.push(`/packs/${id}`)
+			},
+			() => this.notificationContext.create('Failed to create sticker pack.')
 		)
 	}
 
 	@action
-	async createStickerPack(data) {
-		this.createResult = fromPromise(this.api.createStickerPack(data))
-		this.createResult.data = data
+	logout() {
+		this.user = undefined
 	}
 }
+
+export default StickersWorldStore

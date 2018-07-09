@@ -1,52 +1,40 @@
-import {observable, action, runInAction} from 'mobx'
+import { observable, action } from 'mobx'
+import { fromPromise } from 'mobx-utils'
 
 import StickerStore from './StickerStore'
 
 export default class StickerPackStore {
 	@observable id
 	@observable name
-	@observable stickers
-	@observable state = 'initial' // 'initial' / 'loading' / 'ready' / 'error'
-	@observable error
+	@observable stickers = []
 
-	constructor(api, {id, name}) {
+	@observable fetchStickersResult
+	@observable createStickerResult
+
+	constructor(api, { id, name }) {
 		this.api = api
 		this.id = id
 		this.name = name
 	}
 
 	@action
-	async getStickers() {
-		this.state = 'loading'
-		try {
-			let {stickers} = await this.api.getStickers({id: this.id})
-			runInAction(() => {
-				this.stickers = stickers.map((sticker) => new StickerStore(sticker))
-				this.state = 'ready'
-			})
-		} catch(error) {
-			this.state = 'error'
-			this.error = error
-		}
+	async fetchStickers() {
+		this.fetchStickersResult = fromPromise(this.api.getStickers({ id: this.id }))
+		this.fetchStickersResult.then(({ stickers }) => {
+			this.stickers = stickers.map(sticker => new StickerStore(sticker))
+		})
 	}
 
 	@action
 	async createSticker(data) {
-		this.state = 'loading'
-		try {
-			let {id} = await this.api.createSticker(data)
-			runInAction(() => {
-				this.stickers.push(new StickerModel({...data, id}))
-				this.state = 'ready'
-			})
-		} catch(error) {
-			this.state = 'error'
-			this.error = error
-		}
+		this.createStickerResult = fromPromise(this.api.stickers.create(data))
+		this.createStickerResult.then(({ id }) => {
+			this.stickers.push(new StickerStore({ ...data, id }))
+		})
 	}
 
 	@action
 	async edit(edits) {
-		let res = await this.api.editStickerPack(this.id, edits)
+		// let res = await this.api.editStickerPack(this.id, edits)
 	}
 }
