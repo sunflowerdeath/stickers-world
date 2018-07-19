@@ -4,6 +4,9 @@ import mapValues from 'lodash/mapValues'
 import upperFirst from 'lodash/upperFirst'
 import floral from 'floral'
 import Taply from 'taply'
+import * as PIXI from 'pixi.js'
+
+import Matrix from '@@/utils/Matrix'
 
 import FlatButton from 'material-ui/FlatButton'
 
@@ -14,6 +17,12 @@ import SvgIcon from '@@/components/SvgIcon'
 
 // import AspectSwitcher from './AspectSwitcher'
 import AngleSlider from './AngleSlider'
+
+const CANVAS_HEIGHT = document.documentElement.clientHeight
+const CANVAS_WIDTH = document.documentElement.clientWidth
+
+const distanceBetweenPoints = (a, b) =>
+	Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2)
 
 /*
 TODO
@@ -36,9 +45,9 @@ import cornerIcon from '!raw-loader!./corner.svg'
 const SCREEN_WIDTH = document.documentElement.clientWidth
 const SCREEN_HEIGHT = document.documentElement.clientHeight
 const TOP_BAR_HEIGHT = 64
-const BOTTOM_PANEL_HEIGHT = 112 + 16
-const VERT_PADDING = 10
-const HORIZ_PADDING = 20
+const BOTTOM_PANEL_HEIGHT = 64 + 48 + 16
+const VERT_PADDING = 12
+const HORIZ_PADDING = 24
 
 const toRad = deg => deg * Math.PI / 180
 
@@ -288,66 +297,29 @@ const getScale = crop => {
 	return Math.min(horizScale, vertScale)
 }
 
-const getContainerStyle = (image, crop, scale) => {
-	const top =
-		TOP_BAR_HEIGHT +
-		(SCREEN_HEIGHT -
-			TOP_BAR_HEIGHT -
-			BOTTOM_PANEL_HEIGHT -
-			crop.height * scale) /
-			2
-	const left = (SCREEN_WIDTH - crop.width * scale) / 2
-	const originTop = (crop.top + crop.height / 2) * scale
-	const originLeft = (crop.left + crop.width / 2) * scale
-	return {
-		position: 'absolute',
-		willChange: 'transform, width, height, opacity',
-		width: image.width * scale,
-		height: image.height * scale,
-		transform: [
-			`translateY(${top - crop.top * scale}px)`,
-			`translateX(${left - crop.left * scale}px)`,
-			`rotate(${crop.angle}rad)`
-		].join(' '),
-		transformOrigin: `${originLeft}px ${originTop}px`
-	}
-}
-
 const styles = (props, state) => {
-	const { crop, aspect, isPanning, isResizing, prevCrop } = state
-	const { image } = props
-
-	const centerCrop = isResizing ? prevCrop : crop
-	const scale = getScale(centerCrop)
+	const { aspect, isPanning } = state
+	const { cropWidth, cropHeight, cropTop, cropLeft } = state.drawState
 
 	return {
-		container: getContainerStyle(image, centerCrop, scale),
 		icon: {
 			fill: 'white'
-		},
-		image: {
-			width: '100%',
-			height: '100%',
-			opacity: isPanning ? '0.5' : '0.3'
 		},
 		crop: {
 			position: 'absolute',
 			top: 0,
 			left: 0,
-			width: crop.width * scale,
-			height: crop.height * scale,
-			transform: [
-				`translateY(${crop.top * scale}px)`,
-				`translateX(${crop.left * scale}px)`,
-				`rotate(${-crop.angle}rad)`
-			].join(' '),
-			transformOrigin: '50% 50%',
+			width: cropWidth,
+			height: cropHeight,
+			transform: `translateY(${cropTop}px) translateX(${cropLeft}px)`,
 			willChange: 'transform, width, height',
 			cursor: isPanning ? 'move' : 'pointer',
-			boxShadow: `0 0 0 2px #aaa`,
-			transition: 'box-shadow 0.15s',
 			boxSizing: 'border-box',
 			borderRadius: aspect === 'circle' ? '50%' : 0
+		},
+		container: {
+			width: '100%',
+			height: '100%'
 		},
 		canvas: {
 			width: '100%',
@@ -357,11 +329,30 @@ const styles = (props, state) => {
 	}
 }
 
+// calculate crop position on the screen
+const getDrawState = crop => {
+	const scale = getScale(crop)
+	const cropTop =
+		TOP_BAR_HEIGHT +
+		(SCREEN_HEIGHT -
+			TOP_BAR_HEIGHT -
+			BOTTOM_PANEL_HEIGHT -
+			crop.height * scale) /
+			2
+	const cropLeft = (SCREEN_WIDTH - crop.width * scale) / 2
+	const cropWidth = crop.width * scale
+	const cropHeight = crop.height * scale
+
+	return { scale, cropTop, cropLeft, cropWidth, cropHeight }
+}
+
 @floral(styles)
 @bindMethods(
 	'onPanStart',
 	'onPanMove',
 	'onPanEnd',
+	'onPinchStart',
+	'onPinchMove',
 	'onRotateStart',
 	'onRotate',
 	'onResizeStart',
@@ -375,6 +366,11 @@ export default class AdjustView extends Component {
 		image: PropTypes.instanceOf(Image).isRequired,
 		onGoBack: PropTypes.func.isRequired,
 		onGoNext: PropTypes.func.isRequired
+	}
+
+	static getDerivedStateFromProps(props, state) {
+		const { isResizing, crop, prevCrop } = state
+		return { drawState: getDrawState(isResizing ? prevCrop : crop) }
 	}
 
 	constructor(props) {
@@ -397,11 +393,80 @@ export default class AdjustView extends Component {
 	}
 
 	componentDidMount() {
-		this.drawCrop()
+		this.initPixi()
+		this.drawPixi()
 	}
 
 	componentDidUpdate() {
-		this.drawCrop()
+		this.drawPixi()
+	}
+
+	initPixi() {
+		this.pixi = new PIXI.Application({
+			view: this.pixiCanvasRef,
+			transparent: true,
+			width: CANVAS_WIDTH,
+			height: CANVAS_HEIGHT
+		})
+
+		this.container = new PIXI.Container()
+		this.pixi.stage.addChild(this.container)
+
+		this.image = PIXI.Sprite.fromImage(this.props.image.src)
+		this.container.addChild(this.image)
+
+		this.graphics = new PIXI.Graphics()
+		this.container.addChild(this.graphics)
+	}
+
+	drawPixi() {
+		const { isResizing, crop, prevCrop, drawState } = this.state
+		const { scale, cropTop, cropLeft } = drawState
+		const actualCrop = isResizing ? prevCrop : crop
+
+		const originX = cropLeft + actualCrop.width / 2 * scale
+		const originY = cropTop + actualCrop.height / 2 * scale
+
+		const translateX = -actualCrop.left * scale + cropLeft
+		const translateY = -actualCrop.top * scale + cropTop
+
+		// for some reason PIXI matrix works differently :<
+		new PIXI.Matrix(
+			...new Matrix()
+				// rotate image from the center of the crop
+				.translate(originX, originY)
+				.rotate(crop.angle)
+				.translate(-originX, -originY)
+				// position image to show crop at the center of the screen
+				.translate(translateX, translateY)
+				.scale(scale, scale)
+				.toArray()
+		).decompose(this.container.transform)
+
+		this.graphics
+			.clear()
+			// crop border
+			.lineStyle(2 / scale, 0xcccccc, 1, 0)
+			.drawRect(0, 0, crop.width, crop.height)
+			// dim for cropped image
+			.lineStyle(
+				Math.max(SCREEN_HEIGHT, SCREEN_WIDTH) / scale,
+				0x000000,
+				0.5,
+				1
+			)
+			.drawRect(0, 0, crop.width, crop.height)
+
+		const cropOriginX = crop.width / 2
+		const cropOriginY = crop.height / 2
+		new PIXI.Matrix(
+			...new Matrix()
+				.translate(crop.left, crop.top)
+				.translate(cropOriginX, cropOriginY)
+				.rotate(-crop.angle)
+				.translate(-cropOriginX, -cropOriginY)
+				.toArray()
+		).decompose(this.graphics.transform)
 	}
 
 	onPanStart() {
@@ -432,6 +497,24 @@ export default class AdjustView extends Component {
 
 	onPanEnd() {
 		this.setState({ isPanning: false })
+	}
+
+	onPinchStart(event, touches) {
+		const [t1, t2] = touches
+		this.initialCrop = this.state.crop
+		this.initialDistance = distanceBetweenPoints(t1, t2)
+	}
+
+	onPinchMove(event, touches) {
+		const [t1, t2] = touches
+		const { initialDistance, initialCrop } = this
+
+		event.preventDefault()
+
+		const currentDistance = distanceBetweenPoints(t1, t2)
+		this.setState({
+			crop: scaleCrop(initialCrop, currentDistance / initialDistance)
+		})
 	}
 
 	onRotateStart() {
@@ -470,8 +553,6 @@ export default class AdjustView extends Component {
 			dy / scale,
 			this.direction
 		)
-		// console.log(this.direction)
-		const omit = RESIZE_DIRECTIONS[this.direction][2]
 		const fitCrop = fitResize(resizedCrop, image)
 		this.setState({ crop: fitCrop })
 	}
@@ -479,9 +560,6 @@ export default class AdjustView extends Component {
 	onResizeEnd() {
 		this.setState({ isResizing: false })
 	}
-
-	// PINCH
-	// onPinchMove(dx, dy, scale) {}
 
 	onTapNext() {
 		const { crop } = this.state
@@ -504,23 +582,6 @@ export default class AdjustView extends Component {
 				scale: 1
 			}
 		})
-	}
-
-	drawCrop() {
-		const { crop } = this.state
-
-		const originLeft = crop.width / 2
-		const originTop = crop.height / 2
-		const ctx = this.canvasRef.getContext('2d')
-		ctx.save()
-		ctx.translate(originLeft, originTop)
-		ctx.rotate(crop.angle)
-		ctx.drawImage(
-			this.imageRef,
-			Math.ceil(-originLeft - crop.left),
-			Math.ceil(-originTop - crop.top)
-		)
-		ctx.restore()
 	}
 
 	renderResizeCorners() {
@@ -599,7 +660,7 @@ export default class AdjustView extends Component {
 
 	render() {
 		const { image } = this.props
-		const { crop, isResizing, computedStyles } = this.state
+		const { crop, computedStyles } = this.state
 
 		return (
 			<OverlayLayout
@@ -611,28 +672,20 @@ export default class AdjustView extends Component {
 					onTapStart={this.onPanStart}
 					onTapMove={this.onPanMove}
 					onTapEnd={this.onPanEnd}
+					isPinchable
+					onPinchStart={this.onPinchStart}
+					onPinchMove={this.onPinchMove}
 				>
 					<div style={computedStyles.container}>
-						<img
-							alt=""
-							style={computedStyles.image}
-							src={image.src}
+						<canvas
+							style={computedStyles.canvas}
+							width={CANVAS_WIDTH}
+							height={CANVAS_HEIGHT}
 							ref={ref => {
-								this.imageRef = ref
-							}}
-							onLoad={() => {
-								this.imageLoaded = true
+								this.pixiCanvasRef = ref
 							}}
 						/>
 						<div style={computedStyles.crop}>
-							<canvas
-								style={computedStyles.canvas}
-								width={Math.round(crop.width)}
-								height={Math.round(crop.height)}
-								ref={ref => {
-									this.canvasRef = ref
-								}}
-							/>
 							{this.renderResizeCorners()}
 						</div>
 					</div>

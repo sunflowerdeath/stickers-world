@@ -84,14 +84,21 @@ class CreateStickerView extends Component {
 					onGoBack={() => {
 						this.setState({ step: 'adjust' })
 					}}
-					onGoNext={() => {
-						this.setState({ step: 'save' })
+					onGoNext={({ sticker }) => {
+						this.setState({ step: 'save', sticker })
 					}}
 				/>
 			)
 		}
 
-		if (step === 'save') return <SaveView />
+		if (step === 'save') {
+			return (
+				<SaveView
+					stickerUrl={URL.createObjectURL(this.state.sticker)}
+					onGoBack={() => this.setState({ step: 'edit' })}
+				/>
+			)
+		}
 	}
 }
 

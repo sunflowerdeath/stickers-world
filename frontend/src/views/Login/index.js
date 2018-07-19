@@ -1,12 +1,13 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import { inject } from 'mobx-react'
 import { withRouter } from 'react-router'
 import floral from 'floral'
 import Taply from 'taply'
 
 import matchMediaDecorator from '@@/utils/matchMedia/decorator'
-import Tappable from '@@/components/Tappable'
 import Logo from '@@/components/Logo'
+import TelegramLoginButton from '@@/components/TelegramLoginButton'
 
 import telegramPng from './telegram.png'
 
@@ -18,11 +19,6 @@ import moneyfacePng from './moneyface.png'
 import gnomekidPng from './gnomekid.png'
 import pepePng from './pepe.png'
 import pepaPng from './pepa.png'
-
-const SYMBOLS = {
-	nbsp: '\u00A0',
-	sp: ' '
-}
 
 const PLATFORM = 'web'
 
@@ -117,6 +113,7 @@ const styles = props => {
 
 @withRouter
 @matchMediaDecorator({ smallHeight: '(max-height: 700px)' })
+@inject('store')
 @floral(styles)
 export default class LoginView extends React.Component {
 	static contextTypes = {
@@ -145,30 +142,13 @@ export default class LoginView extends React.Component {
 	}
 
 	renderBlocks() {
+		const { store } = this.props
 		const { computedStyles } = this.state
+
 		return (
 			<div>
 				<div style={computedStyles.block}>
-					<Tappable
-						style={{ cursor: 'pointer' }}
-						onTap={() =>
-							this.props.history.push('https://telegram.org/')
-						}
-					>
-						<div style={computedStyles.telegramLogo} />
-						<div style={computedStyles.button}>
-							Authorize in telegram bot
-						</div>
-					</Tappable>
-					<div style={computedStyles.caption}>
-						Send <span style={{ color: 'white' }}>/start</span>
-						{SYMBOLS.sp}
-						to Stickers World bot and{SYMBOLS.nbsp}then click on link in
-						reply.
-						<br />
-						Bot will be able to upload your sticker{SYMBOLS.nbsp}packs to
-						Telegram.
-					</div>
+					<TelegramLoginButton botName='StickersWorldBot' />
 				</div>
 				<Taply onTap={this.onTapCreate}>
 					<div style={computedStyles.block}>

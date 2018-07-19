@@ -5,6 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "start": "gnoll start",
+    "start80": "PORT=80 sudo ./node_modules/.bin/gnoll start",
     "build": "gnoll build",
     "lint": "gnoll lint"
   },
@@ -29,6 +30,8 @@
     "mobx-react": "^5.2.3",
     "mobx-utils": "^5.0.0",
     "modernizr": "^3.5.0",
+    "pica": "^4.1.1",
+    "pixi.js": "^4.8.1",
     "prop-types": "^15.6.0",
     "q": "^1.5.0",
     "react": "^16.4.1",

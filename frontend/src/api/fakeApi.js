@@ -18,8 +18,8 @@ const STICKERS = {
 
 export default {
 	getInitialData() {
-		return USER_INITIAL_DATA
-		// return NO_USER_INITIAL_DATA
+		// return USER_INITIAL_DATA
+		return NO_USER_INITIAL_DATA
 	},
 
 	fakeRequest(response, options) {
@@ -32,8 +32,13 @@ export default {
 		return deferred.promise
 	},
 
+	login(/* token */) {
+		window.open('http://telegram.org')
+		// return this.fakeRequest(USER_INITIAL_DATA)
+	},
+
 	createStickerPack(/* {name, title} */) {
-		if (window.__FAIL__) return this.fakeRequest({}, { error: true })
+		// if (window.__FAIL__) return this.fakeRequest({}, { error: true })
 		return this.fakeRequest({ id: new Date().getTime() })
 	},
 

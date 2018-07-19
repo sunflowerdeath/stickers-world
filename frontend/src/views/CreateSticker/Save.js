@@ -23,6 +23,7 @@ class SaveStickerView extends Component {
 			<div>
 				{this.renderTopBar()}
 				<div style={{ padding: '0 24px' }}>
+					<img src={this.props.stickerUrl} />
 					<TextField fullWidth floatingLabelText="Name" />
 					<TextField fullWidth floatingLabelText="Emojis" />
 					<FlatButton
